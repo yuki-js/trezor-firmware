@@ -4,25 +4,28 @@
 : "${FORCE_DOCKER_USE:=0}"
 : "${RUN_TEST_EMU:=1}"
 
-SDIR="$(SHELL_SESSION_FILE='' && cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-CORE_DIR="$SDIR/.."
-MICROPYTHON="$CORE_DIR/build/unix/micropython"
+CORE_DIR="$(SHELL_SESSION_FILE='' && cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null 2>&1 && pwd )"
+MICROPYTHON="${MICROPYTHON:-${CORE_DIR}/build/unix/micropython}"
+TREZOR_SRC="${CORE_DIR}/src"
+
 DISABLE_FADE=1
 PYOPT=0
 upy_pid=""
 
 # run emulator if RUN_TEST_EMU
 if [[ $RUN_TEST_EMU > 0 ]]; then
-  cd "$CORE_DIR/src"
+
+  source ../trezor_cmd.sh
+
+  cd "${TREZOR_SRC}"
   TREZOR_TEST=1 \
   TREZOR_DISABLE_FADE=$DISABLE_FADE \
-    "$MICROPYTHON" -O$PYOPT main.py >/dev/null &
+    $MICROPYTHON $ARGS "${MAIN}" &> "${TREZOR_LOGFILE}" &
   upy_pid=$!
   cd -
   sleep 1
 fi
 
-export TREZOR_PATH=udp:127.0.0.1:21324
 DOCKER_ID=""
 
 # Test termination trap
