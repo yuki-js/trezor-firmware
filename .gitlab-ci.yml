@@ -24,6 +24,7 @@ stages:
   - prebuild
   - build
   - test
+  - aftertest
 
 before_script:
   - pipenv install
