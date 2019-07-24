@@ -6,7 +6,7 @@ from trezor.crypto import bip39, slip39
 from apps.common import storage
 
 if False:
-    from typing import Tuple
+    from typing import Optional, Tuple
 
 TYPE_BIP39 = const(0)
 TYPE_SLIP39 = const(1)
@@ -20,16 +20,25 @@ TYPES_WORD_COUNT = {
 }
 
 
-def get() -> Tuple[bytes, int]:
-    mnemonic_secret = storage.device.get_mnemonic_secret()
+def get() -> Tuple[Optional[bytes], int]:
+    return get_secret(), get_type()
+
+
+def get_secret() -> Optional[bytes]:
+    return storage.device.get_mnemonic_secret()
+
+
+def get_type() -> int:
     mnemonic_type = storage.device.get_mnemonic_type() or TYPE_BIP39
     if mnemonic_type not in (TYPE_BIP39, TYPE_SLIP39):
         raise RuntimeError("Invalid mnemonic type")
-    return mnemonic_secret, mnemonic_type
+    return mnemonic_type
 
 
 def get_seed(passphrase: str = "", progress_bar: bool = True) -> bytes:
     mnemonic_secret, mnemonic_type = get()
+    if mnemonic_secret is None:
+        raise ValueError("Mnemonic not set")
 
     render_func = None
     if progress_bar:
@@ -37,18 +46,16 @@ def get_seed(passphrase: str = "", progress_bar: bool = True) -> bytes:
         render_func = _render_progress
 
     if mnemonic_type == TYPE_BIP39:
-        seed = bip39.seed(mnemonic_secret.decode(), passphrase, render_func)
+        return bip39.seed(mnemonic_secret.decode(), passphrase, render_func)
 
     elif mnemonic_type == TYPE_SLIP39:
         identifier = storage.device.get_slip39_identifier()
         iteration_exponent = storage.device.get_slip39_iteration_exponent()
-        seed = slip39.decrypt(
+        return slip39.decrypt(
             identifier, iteration_exponent, mnemonic_secret, passphrase
         )
 
-    if progress_bar:
-        _stop_progress()
-    return seed
+    raise ValueError("Unknown mnemonic type")
 
 
 def type_from_word_count(count: int) -> int:
