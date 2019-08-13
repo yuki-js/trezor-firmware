@@ -5,7 +5,7 @@ import pytest
 import shamir_mnemonic as shamir
 from shamir_mnemonic import MnemonicError
 
-from trezorlib import device, messages as proto
+from trezorlib import device, messages
 from trezorlib.messages import ButtonRequestType as B, ResetDeviceBackupType
 
 from .common import TrezorTest, generate_entropy
@@ -106,28 +106,28 @@ class TestMsgResetDeviceT2(TrezorTest):
         with mock.patch("os.urandom", os_urandom), self.client:
             self.client.set_expected_responses(
                 [
-                    proto.ButtonRequest(code=B.ResetDevice),
-                    proto.EntropyRequest(),
-                    proto.ButtonRequest(code=B.ResetDevice),
-                    proto.ButtonRequest(code=B.ResetDevice),
-                    proto.ButtonRequest(code=B.ResetDevice),
-                    proto.ButtonRequest(code=B.ResetDevice),
-                    proto.ButtonRequest(code=B.ResetDevice),
-                    proto.ButtonRequest(code=B.ResetDevice),
-                    proto.ButtonRequest(code=B.ResetDevice),
-                    proto.ButtonRequest(code=B.Other),
-                    proto.ButtonRequest(code=B.Success),
-                    proto.ButtonRequest(code=B.Other),
-                    proto.ButtonRequest(code=B.Success),
-                    proto.ButtonRequest(code=B.Other),
-                    proto.ButtonRequest(code=B.Success),
-                    proto.ButtonRequest(code=B.Other),
-                    proto.ButtonRequest(code=B.Success),
-                    proto.ButtonRequest(code=B.Other),
-                    proto.ButtonRequest(code=B.Success),
-                    proto.ButtonRequest(code=B.Success),
-                    proto.Success(),
-                    proto.Features(),
+                    messages.ButtonRequest(code=B.ResetDevice),
+                    messages.EntropyRequest(),
+                    messages.ButtonRequest(code=B.ResetDevice),
+                    messages.ButtonRequest(code=B.ResetDevice),
+                    messages.ButtonRequest(code=B.ResetDevice),
+                    messages.ButtonRequest(code=B.ResetDevice),
+                    messages.ButtonRequest(code=B.ResetDevice),
+                    messages.ButtonRequest(code=B.ResetDevice),
+                    messages.ButtonRequest(code=B.ResetDevice),
+                    messages.ButtonRequest(code=B.Other),
+                    messages.ButtonRequest(code=B.Success),
+                    messages.ButtonRequest(code=B.Other),
+                    messages.ButtonRequest(code=B.Success),
+                    messages.ButtonRequest(code=B.Other),
+                    messages.ButtonRequest(code=B.Success),
+                    messages.ButtonRequest(code=B.Other),
+                    messages.ButtonRequest(code=B.Success),
+                    messages.ButtonRequest(code=B.Other),
+                    messages.ButtonRequest(code=B.Success),
+                    messages.ButtonRequest(code=B.Success),
+                    messages.Success(),
+                    messages.Features(),
                 ]
             )
             self.client.set_input_flow(input_flow)
@@ -145,7 +145,7 @@ class TestMsgResetDeviceT2(TrezorTest):
             )
 
         # Check if device is properly initialized
-        resp = self.client.call_raw(proto.Initialize())
+        resp = self.client.call_raw(messages.Initialize())
         assert resp.initialized is True
         assert resp.needs_backup is False
         assert resp.pin_protection is False
