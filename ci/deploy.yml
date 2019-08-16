@@ -4,10 +4,10 @@ image: registry.gitlab.com/satoshilabs/trezor/trezor-firmware/environment
 
 deploy upload core emu:
   stage: deploy
+  before_script: []  # no pipenv
   variables:
     DEPLOY_DIRECTORY: "${DEPLOY_BASE_DIR}core/emulators/${CI_COMMIT_REF_NAME}"
-  before_script: []  # no pipenv
-  when: manual
+  # when: manual
   dependencies:
     - build core unix frozen
   script:
@@ -22,7 +22,7 @@ deploy upload core firmware:
   variables:
     DEPLOY_DIRECTORY: "${DEPLOY_BASE_DIR}core/firmwares/${CI_COMMIT_REF_NAME}"
   before_script: []  # no pipenv
-  when: manual
+  # when: manual
   dependencies:
     - build core firmware
   script:
@@ -40,7 +40,7 @@ deploy upload legacy emu:
   variables:
     DEPLOY_DIRECTORY: "${DEPLOY_BASE_DIR}legacy/emulators/${CI_COMMIT_REF_NAME}"
   before_script: []  # no pipenv
-  when: manual
+  # when: manual
   dependencies:
     - build legacy emu
   script:
@@ -55,7 +55,7 @@ deploy upload legacy firmware:
   variables:
     DEPLOY_DIRECTORY: "${DEPLOY_BASE_DIR}legacy/firmwares/${CI_COMMIT_REF_NAME}"
   before_script: []  # no pipenv
-  when: manual
+  # when: manual
   dependencies:
     - build legacy firmware
   script:
