@@ -260,7 +260,7 @@ STATIC const mp_obj_type_t mod_trezorio_FatFSFile_type = {
     .locals_dict = (void *)&mod_trezorio_FatFSFile_locals_dict,
 };
 
-/// class FatFSDir:
+/// class FatFSDir(Iterable[Tuple[int, str, str]]):
 ///     """
 ///     Class encapsulating directory
 ///     """
@@ -269,7 +269,7 @@ typedef struct _mp_obj_FatFSDir_t {
   FF_DIR dp;
 } mp_obj_FatFSDir_t;
 
-/// def __next__(self) -> Tuple[str, int, str]:
+/// def __next__(self) -> Tuple[int, str, str]:
 ///     """
 ///     Read an entry in the directory
 ///     """
@@ -314,7 +314,7 @@ STATIC mp_obj_t mod_trezorio_FatFS_make_new(const mp_obj_type_t *type,
   return MP_OBJ_FROM_PTR(o);
 }
 
-/// def open(self, path: string, flags: string) -> FatFSFile:
+/// def open(self, path: str, flags: str) -> FatFSFile:
 ///     """
 ///     Open or create a file
 ///     """
@@ -358,7 +358,7 @@ STATIC mp_obj_t mod_trezorio_FatFS_open(mp_obj_t self, mp_obj_t path,
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(mod_trezorio_FatFS_open_obj,
                                  mod_trezorio_FatFS_open);
 
-/// def listdir(self, path: string) -> FatFSDir:
+/// def listdir(self, path: str) -> FatFSDir:
 ///     """
 ///     List a directory (return generator)
 ///     """
@@ -379,7 +379,7 @@ STATIC mp_obj_t mod_trezorio_FatFS_listdir(mp_obj_t self, mp_obj_t path) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_trezorio_FatFS_listdir_obj,
                                  mod_trezorio_FatFS_listdir);
 
-/// def mkdir(self, path: string) -> None:
+/// def mkdir(self, path: str) -> None:
 ///     """
 ///     Create a sub directory
 ///     """
@@ -396,7 +396,7 @@ STATIC mp_obj_t mod_trezorio_FatFS_mkdir(mp_obj_t self, mp_obj_t path) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_trezorio_FatFS_mkdir_obj,
                                  mod_trezorio_FatFS_mkdir);
 
-/// def unlink(self, path: string) -> None:
+/// def unlink(self, path: str) -> None:
 ///     """
 ///     Delete an existing file or directory
 ///     """
@@ -413,7 +413,7 @@ STATIC mp_obj_t mod_trezorio_FatFS_unlink(mp_obj_t self, mp_obj_t path) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_trezorio_FatFS_unlink_obj,
                                  mod_trezorio_FatFS_unlink);
 
-/// def stat(self, path: string) -> Tuple[str, int, str]:
+/// def stat(self, path: str) -> Tuple[int, str, str]:
 ///     """
 ///     Get file status
 ///     """

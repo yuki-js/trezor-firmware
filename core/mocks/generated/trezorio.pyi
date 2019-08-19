@@ -44,12 +44,12 @@ class FatFSFile:
 
 
 # extmod/modtrezorio/modtrezorio-fatfs.h
-class FatFSDir:
+class FatFSDir(Iterable[Tuple[int, str, str]]):
     """
     Class encapsulating directory
     """
 
-    def __next__(self) -> Tuple[str, int, str]:
+    def __next__(self) -> Tuple[int, str, str]:
         """
         Read an entry in the directory
         """
@@ -65,27 +65,27 @@ class FatFS:
         """
         """
 
-    def open(self, path: string, flags: string) -> FatFSFile:
+    def open(self, path: str, flags: str) -> FatFSFile:
         """
         Open or create a file
         """
 
-    def listdir(self, path: string) -> FatFSDir:
+    def listdir(self, path: str) -> FatFSDir:
         """
         List a directory (return generator)
         """
 
-    def mkdir(self, path: string) -> None:
+    def mkdir(self, path: str) -> None:
         """
         Create a sub directory
         """
 
-    def unlink(self, path: string) -> None:
+    def unlink(self, path: str) -> None:
         """
         Delete an existing file or directory
         """
 
-    def stat(self, path: string) -> Tuple[str, int, str]:
+    def stat(self, path: str) -> Tuple[int, str, str]:
         """
         Get file status
         """
