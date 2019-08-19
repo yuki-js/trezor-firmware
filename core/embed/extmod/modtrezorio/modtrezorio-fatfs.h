@@ -133,7 +133,7 @@ STATIC mp_obj_t mod_trezorio_FatFSFile___exit__(size_t n_args,
                                                 const mp_obj_t *args) {
   mp_obj_FatFSFile_t *o = MP_OBJ_TO_PTR(args[0]);
   FRESULT res = f_close(&(o->fp));
-  if (res) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   return mp_const_none;
@@ -149,7 +149,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mod_trezorio_FatFSFile___exit___obj,
 STATIC mp_obj_t mod_trezorio_FatFSFile_close(mp_obj_t self) {
   mp_obj_FatFSFile_t *o = MP_OBJ_TO_PTR(self);
   FRESULT res = f_close(&(o->fp));
-  if (res) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   return mp_const_none;
@@ -167,7 +167,7 @@ STATIC mp_obj_t mod_trezorio_FatFSFile_read(mp_obj_t self, mp_obj_t data) {
   mp_get_buffer_raise(data, &buf, MP_BUFFER_WRITE);
   UINT read;
   FRESULT res = f_read(&(o->fp), buf.buf, buf.len, &read);
-  if (res < 0) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   return mp_obj_new_int_from_uint(read);
@@ -185,7 +185,7 @@ STATIC mp_obj_t mod_trezorio_FatFSFile_write(mp_obj_t self, mp_obj_t data) {
   mp_get_buffer_raise(data, &buf, MP_BUFFER_READ);
   UINT written;
   FRESULT res = f_write(&(o->fp), buf.buf, buf.len, &written);
-  if (res < 0) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   return mp_obj_new_int_from_uint(written);
@@ -201,7 +201,7 @@ STATIC mp_obj_t mod_trezorio_FatFSFile_seek(mp_obj_t self, mp_obj_t offset) {
   mp_obj_FatFSFile_t *o = MP_OBJ_TO_PTR(self);
   FSIZE_t ofs = trezor_obj_get_uint(offset);
   FRESULT res = f_lseek(&(o->fp), ofs);
-  if (res) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   return mp_const_none;
@@ -216,7 +216,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_trezorio_FatFSFile_seek_obj,
 STATIC mp_obj_t mod_trezorio_FatFSFile_truncate(mp_obj_t self) {
   mp_obj_FatFSFile_t *o = MP_OBJ_TO_PTR(self);
   FRESULT res = f_truncate(&(o->fp));
-  if (res) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   return mp_const_none;
@@ -231,7 +231,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(mod_trezorio_FatFSFile_truncate_obj,
 STATIC mp_obj_t mod_trezorio_FatFSFile_sync(mp_obj_t self) {
   mp_obj_FatFSFile_t *o = MP_OBJ_TO_PTR(self);
   FRESULT res = f_sync(&(o->fp));
-  if (res) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   return mp_const_none;
@@ -347,7 +347,7 @@ STATIC mp_obj_t mod_trezorio_FatFS_open(mp_obj_t self, mp_obj_t path,
   }
   FIL fp;
   FRESULT res = f_open(&(o->fs), &fp, _path.buf, mode);
-  if (res) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   mp_obj_FatFSFile_t *f = m_new_obj(mp_obj_FatFSFile_t);
@@ -368,7 +368,7 @@ STATIC mp_obj_t mod_trezorio_FatFS_listdir(mp_obj_t self, mp_obj_t path) {
   mp_get_buffer_raise(path, &_path, MP_BUFFER_READ);
   FF_DIR dp;
   FRESULT res = f_opendir(&(o->fs), &dp, _path.buf);
-  if (res) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   mp_obj_FatFSDir_t *d = m_new_obj(mp_obj_FatFSDir_t);
@@ -388,7 +388,7 @@ STATIC mp_obj_t mod_trezorio_FatFS_mkdir(mp_obj_t self, mp_obj_t path) {
   mp_buffer_info_t _path;
   mp_get_buffer_raise(path, &_path, MP_BUFFER_READ);
   FRESULT res = f_mkdir(&(o->fs), _path.buf);
-  if (res) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   return mp_const_none;
@@ -405,7 +405,7 @@ STATIC mp_obj_t mod_trezorio_FatFS_unlink(mp_obj_t self, mp_obj_t path) {
   mp_buffer_info_t _path;
   mp_get_buffer_raise(path, &_path, MP_BUFFER_READ);
   FRESULT res = f_unlink(&(o->fs), _path.buf);
-  if (res) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   return mp_const_none;
@@ -423,7 +423,7 @@ STATIC mp_obj_t mod_trezorio_FatFS_stat(mp_obj_t self, mp_obj_t path) {
   mp_get_buffer_raise(path, &_path, MP_BUFFER_READ);
   FILINFO info;
   FRESULT res = f_stat(&(o->fs), _path.buf, &info);
-  if (res) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   return filinfo_to_tuple(&info);
@@ -442,7 +442,7 @@ STATIC mp_obj_t mod_trezorio_FatFS_rename(mp_obj_t self, mp_obj_t oldpath,
   mp_get_buffer_raise(oldpath, &_oldpath, MP_BUFFER_READ);
   mp_get_buffer_raise(newpath, &_newpath, MP_BUFFER_READ);
   FRESULT res = f_rename(&(o->fs), _oldpath.buf, _newpath.buf);
-  if (res) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   return mp_const_none;
@@ -457,7 +457,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_3(mod_trezorio_FatFS_rename_obj,
 STATIC mp_obj_t mod_trezorio_FatFS_mount(mp_obj_t self) {
   mp_obj_FatFS_t *o = MP_OBJ_TO_PTR(self);
   FRESULT res = f_mount(&(o->fs));
-  if (res) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   return mp_const_none;
@@ -472,7 +472,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(mod_trezorio_FatFS_mount_obj,
 STATIC mp_obj_t mod_trezorio_FatFS_unmount(mp_obj_t self) {
   mp_obj_FatFS_t *o = MP_OBJ_TO_PTR(self);
   FRESULT res = f_umount(&(o->fs));
-  if (res) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   return mp_const_none;
@@ -490,7 +490,7 @@ STATIC mp_obj_t mod_trezorio_FatFS_mkfs(mp_obj_t self) {
   mp_obj_FatFS_t *o = MP_OBJ_TO_PTR(self);
   uint8_t working_buf[FF_MAX_SS];
   FRESULT res = f_mkfs(&(o->fs), FM_FAT32, 0, working_buf, sizeof(working_buf));
-  if (res) {
+  if (res != FR_OK) {
     mp_raise_OSError(fresult_to_errno_table[res]);
   }
   return mp_const_none;
