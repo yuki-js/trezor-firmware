@@ -26,12 +26,11 @@ stages:
   - prebuild
   - build
   - test
+  - deploy
 
 before_script:
   - pipenv sync
 
 include:
-  - ci/environment.yml
-  - ci/prebuild.yml
   - ci/build.yml
-  - ci/test.yml
+  - ci/deploy.yml
