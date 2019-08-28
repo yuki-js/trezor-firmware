@@ -20,11 +20,6 @@ from .common import TrezorTest
 
 
 class TestBasic(TrezorTest):
-    def test_features(self):
-        f0 = self.client.features
-        f1 = self.client.call(messages.Initialize())
-        assert f0 == f1
-
     def test_ping(self):
         ping = self.client.call(messages.Ping(message="ahoj!"))
         assert ping == messages.Success(message="ahoj!")
