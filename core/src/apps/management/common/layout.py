@@ -3,7 +3,7 @@ from micropython import const
 
 from trezor import ui, utils
 from trezor.crypto import random
-from trezor.messages import ButtonRequestType
+from trezor.messages import ButtonRequestType, ResetDeviceBackupType
 from trezor.ui.button import Button, ButtonDefault
 from trezor.ui.checklist import Checklist
 from trezor.ui.info import InfoConfirm
@@ -237,84 +237,32 @@ def _get_mnemonic_page(words: list):
     return text
 
 
+# TODO: icons in checklist
+async def slip39_show_checklist(
+    ctx, step: int, backup_type: ResetDeviceBackupType
+) -> None:
+    checklist = Checklist("Backup checklist", ui.ICON_RESET)
+    if backup_type is ResetDeviceBackupType.Slip39_Single_Group:
+        checklist.add("Set number of shares")
+        checklist.add("Set threshold")
+        checklist.add(("Write down and check", "all recovery shares"))
+    elif backup_type is ResetDeviceBackupType.Slip39_Multiple_Groups:
+        checklist.add("Set number of groups")
+        checklist.add("Set group threshold")
+        checklist.add(("Set size and threshold", "for each group"))
+    checklist.select(step)
+
+    return await confirm(
+        ctx, checklist, ButtonRequestType.ResetDevice, cancel=None, confirm="Continue"
+    )
+
+
 # SLIP39
 # ===
 
 # TODO: yellow cancel style?
 # TODO: loading animation style?
 # TODO: smaller font or tighter rows to fit more text in
-# TODO: icons in checklist
-
-# SLIP 39 simple
-
-
-async def slip39_show_checklist_set_shares(ctx):
-    checklist = Checklist("Backup checklist", ui.ICON_RESET)
-    checklist.add("Set number of shares")
-    checklist.add("Set threshold")
-    checklist.add(("Write down and check", "all recovery shares"))
-    checklist.select(0)
-    return await confirm(
-        ctx, checklist, ButtonRequestType.ResetDevice, cancel=None, confirm="Continue"
-    )
-
-
-async def slip39_show_checklist_set_threshold(ctx, num_of_shares):
-    checklist = Checklist("Backup checklist", ui.ICON_RESET)
-    checklist.add("Set number of shares")
-    checklist.add("Set threshold")
-    checklist.add(("Write down and check", "all recovery shares"))
-    checklist.select(1)
-    return await confirm(
-        ctx, checklist, ButtonRequestType.ResetDevice, cancel=None, confirm="Continue"
-    )
-
-
-async def slip39_show_checklist_show_shares(ctx, num_of_shares, threshold):
-    checklist = Checklist("Backup checklist", ui.ICON_RESET)
-    checklist.add("Set number of shares")
-    checklist.add("Set threshold")
-    checklist.add(("Write down and check", "all recovery shares"))
-    checklist.select(2)
-    return await confirm(
-        ctx, checklist, ButtonRequestType.ResetDevice, cancel=None, confirm="Continue"
-    )
-
-
-# SLIP 39 group
-
-
-async def slip39_group_show_checklist_set_groups(ctx):
-    checklist = Checklist("Backup checklist", ui.ICON_RESET)
-    checklist.add("Set number of groups")
-    checklist.add("Set group threshold")
-    checklist.add(("Set size and threshold", "for each group"))
-    checklist.select(0)
-    return await confirm(
-        ctx, checklist, ButtonRequestType.ResetDevice, cancel=None, confirm="Continue"
-    )
-
-
-async def slip39_group_show_checklist_set_group_threshold(ctx, num_of_shares):
-    checklist = Checklist("Backup checklist", ui.ICON_RESET)
-    checklist.add("Set number of groups")
-    checklist.add("Set group threshold")
-    checklist.add(("Set size and threshold", "for each group"))
-    checklist.select(1)
-    return await confirm(
-        ctx, checklist, ButtonRequestType.ResetDevice, cancel=None, confirm="Continue"
-    )
-
-
-async def slip39_group_show_checklist_set_shares(ctx, num_of_shares, group_threshold):
-    checklist = Checklist("Backup checklist", ui.ICON_RESET)
-    checklist.add("Set number of groups")
-    checklist.add("Set group threshold")
-    checklist.add(("Set size and threshold", "for each group"))
-    checklist.select(2)
-    return await confirm(
-        ctx, checklist, ButtonRequestType.ResetDevice, cancel=None, confirm="Continue"
-    )
 
 
 async def slip39_prompt_number_of_shares(ctx, group_id=None):

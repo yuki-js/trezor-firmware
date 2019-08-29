@@ -105,11 +105,15 @@ async def backup_slip39_wallet(
     ctx: wire.Context, encrypted_master_secret: bytes
 ) -> None:
     # get number of shares
-    await layout.slip39_show_checklist_set_shares(ctx)
+    await layout.slip39_show_checklist(
+        ctx, 0, ResetDeviceBackupType.Slip39_Single_Group
+    )
     shares_count = await layout.slip39_prompt_number_of_shares(ctx)
 
     # get threshold
-    await layout.slip39_show_checklist_set_threshold(ctx, shares_count)
+    await layout.slip39_show_checklist(
+        ctx, 1, ResetDeviceBackupType.Slip39_Single_Group
+    )
     threshold = await layout.slip39_prompt_threshold(ctx, shares_count)
 
     # generate the mnemonics
@@ -122,7 +126,9 @@ async def backup_slip39_wallet(
     )
 
     # show and confirm individual shares
-    await layout.slip39_show_checklist_show_shares(ctx, shares_count, threshold)
+    await layout.slip39_show_checklist(
+        ctx, 2, ResetDeviceBackupType.Slip39_Single_Group
+    )
     await layout.slip39_show_and_confirm_shares(ctx, mnemonics)
 
 
@@ -130,16 +136,20 @@ async def backup_group_slip39_wallet(
     ctx: wire.Context, encrypted_master_secret: bytes
 ) -> None:
     # get number of groups
-    await layout.slip39_group_show_checklist_set_groups(ctx)
+    await layout.slip39_show_checklist(
+        ctx, 0, ResetDeviceBackupType.Slip39_Multiple_Groups
+    )
     groups_count = await layout.slip39_prompt_number_of_groups(ctx)
 
     # get group threshold
-    await layout.slip39_group_show_checklist_set_group_threshold(ctx, groups_count)
+    await layout.slip39_show_checklist(
+        ctx, 1, ResetDeviceBackupType.Slip39_Multiple_Groups
+    )
     group_threshold = await layout.slip39_prompt_group_threshold(ctx, groups_count)
 
     # get shares and thresholds
-    await layout.slip39_group_show_checklist_set_shares(
-        ctx, groups_count, group_threshold
+    await layout.slip39_show_checklist(
+        ctx, 2, ResetDeviceBackupType.Slip39_Multiple_Groups
     )
     groups = []
     for i in range(groups_count):
