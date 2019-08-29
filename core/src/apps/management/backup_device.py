@@ -25,7 +25,7 @@ async def backup_device(ctx, msg):
     elif mnemonic_type == mnemonic.TYPE_SLIP39_GROUP:
         await backup_group_slip39_wallet(ctx, mnemonic_secret)
     else:
-        await layout.bip39_show_and_confirm_mnemonic(ctx, mnemonic_secret.decode())
+        await layout._show_share_words(ctx, mnemonic_secret.decode())
 
     storage.device.set_unfinished_backup(False)
 

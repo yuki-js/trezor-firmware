@@ -1,5 +1,4 @@
 import ubinascii
-from micropython import const
 
 from trezor import ui, utils
 from trezor.crypto import random
@@ -64,6 +63,89 @@ async def confirm_backup_again(ctx):
         confirm="Back up",
         major_confirm=True,
     )
+
+
+async def _show_share_words(ctx, share_words, share_index=None, group_index=None):
+    first, chunks, last = _split_share_into_pages(share_words)
+
+    if share_index is None:
+        header_title = "Recovery seed"
+    elif group_index is None:
+        header_title = "Recovery share #%s" % (share_index + 1)
+    else:
+        header_title = "Group %s - Share %s" % ((group_index + 1), (share_index + 1))
+    header_icon = ui.ICON_RESET
+    pages = []  # ui page components
+    shares_words_check = []  # check we display correct data
+
+    # first page
+    text = Text(header_title, header_icon)
+    text.bold("Write down these")
+    text.bold("%s words:" % len(share_words))
+    text.br_half()
+    for index, word in first:
+        text.mono("%s. %s" % (index + 1, word))
+        shares_words_check.append(word)
+    pages.append(text)
+
+    # middle pages
+    for chunk in chunks:
+        text = Text(header_title, header_icon)
+        for index, word in chunk:
+            text.mono("%s. %s" % (index + 1, word))
+            shares_words_check.append(word)
+        pages.append(text)
+
+    # last page
+    text = Text(header_title, header_icon)
+    for index, word in last:
+        text.mono("%s. %s" % (index + 1, word))
+        shares_words_check.append(word)
+    text.br_half()
+    text.bold("I wrote down all %s" % len(share_words))
+    text.bold("words in order.")
+    pages.append(text)
+
+    # pagination
+    paginated = Paginated(pages)
+
+    if __debug__:
+
+        word_pages = [first] + chunks + [last]
+
+        def export_displayed_words():
+            # export currently displayed mnemonic words into debuglink
+            words = [w for _, w in word_pages[paginated.page]]
+            debug.reset_current_words.publish(words)
+
+        paginated.on_change = export_displayed_words
+        export_displayed_words()
+
+    # make sure we display correct data
+    utils.ensure(share_words == shares_words_check)
+
+    # confirm the share
+    await hold_to_confirm(
+        ctx, paginated, ButtonRequestType.ResetDevice
+    )  # TODO: customize the loader here
+
+
+def _split_share_into_pages(share_words):
+    share = list(enumerate(share_words))  # we need to keep track of the word indices
+    first = share[:2]  # two words on the first page
+    length = len(share_words)
+    if length == 12 or length == 20 or length == 24:
+        middle = share[2:-2]
+        last = share[-2:]  # two words on the last page
+    elif length == 33:
+        middle = share[2:]
+        last = []  # no words at the last page, because it does not add up
+    else:
+        # Invalid number of shares. SLIP-39 allows 20 or 33 words, BIP-39 12 or 24
+        raise RuntimeError
+
+    chunks = utils.chunks(middle, 4)  # 4 words on the middle pages
+    return first, list(chunks), last
 
 
 async def _confirm_share_words(ctx, share_index, share_words, group_index=None):
@@ -198,7 +280,7 @@ async def bip39_show_and_confirm_mnemonic(ctx, mnemonic: str):
 
     while True:
         # display paginated mnemonic on the screen
-        await _bip39_show_mnemonic(ctx, words)
+        await _show_share_words(ctx, share_words=words)
 
         # make the user confirm 2 words from the mnemonic
         if await _confirm_share_words(ctx, None, words):
@@ -208,36 +290,15 @@ async def bip39_show_and_confirm_mnemonic(ctx, mnemonic: str):
             await _show_confirmation_failure(ctx, None)
 
 
-async def _bip39_show_mnemonic(ctx, words: list):
-    # split mnemonic words into pages
-    PER_PAGE = const(4)
-    words = list(enumerate(words))
-    words = list(utils.chunks(words, PER_PAGE))
+# SLIP39
+# ===
 
-    # display the pages, with a confirmation dialog on the last one
-    pages = [_get_mnemonic_page(page) for page in words]
-    paginated = Paginated(pages)
-
-    if __debug__:
-
-        def export_displayed_words():
-            # export currently displayed mnemonic words into debuglink
-            debug.reset_current_words.publish([w for _, w in words[paginated.page]])
-
-        paginated.on_change = export_displayed_words
-        export_displayed_words()
-
-    await hold_to_confirm(ctx, paginated, ButtonRequestType.ResetDevice)
-
-
-def _get_mnemonic_page(words: list):
-    text = Text("Recovery seed", ui.ICON_RESET)
-    for index, word in words:
-        text.mono("%2d. %s" % (index + 1, word))
-    return text
-
-
+# TODO: yellow cancel style?
+# TODO: loading animation style?
+# TODO: smaller font or tighter rows to fit more text in
 # TODO: icons in checklist
+
+
 async def slip39_show_checklist(
     ctx, step: int, backup_type: ResetDeviceBackupType
 ) -> None:
@@ -255,14 +316,6 @@ async def slip39_show_checklist(
     return await confirm(
         ctx, checklist, ButtonRequestType.ResetDevice, cancel=None, confirm="Continue"
     )
-
-
-# SLIP39
-# ===
-
-# TODO: yellow cancel style?
-# TODO: loading animation style?
-# TODO: smaller font or tighter rows to fit more text in
 
 
 async def slip39_prompt_number_of_shares(ctx, group_id=None):
@@ -432,7 +485,7 @@ async def slip39_show_and_confirm_shares(ctx, shares):
         share_words = share.split(" ")
         while True:
             # display paginated share on the screen
-            await _slip39_show_share_words(ctx, index, share_words)
+            await _show_share_words(ctx, share_words, index)
 
             # make the user confirm words from the share
             if await _confirm_share_words(ctx, index, share_words):
@@ -453,9 +506,7 @@ async def slip39_group_show_and_confirm_shares(ctx, shares):
             share_words = share.split(" ")
             while True:
                 # display paginated share on the screen
-                await _slip39_show_share_words(
-                    ctx, share_index, share_words, group_index
-                )
+                await _show_share_words(ctx, share_words, share_index, group_index)
 
                 # make the user confirm words from the share
                 if await _confirm_share_words(
@@ -471,87 +522,6 @@ async def slip39_group_show_and_confirm_shares(ctx, shares):
                     break  # this share is confirmed, go to next one
                 else:
                     await _show_confirmation_failure(ctx, share_index)
-
-
-async def _slip39_show_share_words(ctx, share_index, share_words, group_index=None):
-    first, chunks, last = _slip39_split_share_into_pages(share_words)
-
-    if share_index is None:
-        header_title = "Recovery seed"
-    elif group_index is None:
-        header_title = "Recovery share #%s" % (share_index + 1)
-    else:
-        header_title = "Group %s - Share %s" % ((group_index + 1), (share_index + 1))
-    header_icon = ui.ICON_RESET
-    pages = []  # ui page components
-    shares_words_check = []  # check we display correct data
-
-    # first page
-    text = Text(header_title, header_icon)
-    text.bold("Write down these")
-    text.bold("%s words:" % len(share_words))
-    text.br_half()
-    for index, word in first:
-        text.mono("%s. %s" % (index + 1, word))
-        shares_words_check.append(word)
-    pages.append(text)
-
-    # middle pages
-    for chunk in chunks:
-        text = Text(header_title, header_icon)
-        for index, word in chunk:
-            text.mono("%s. %s" % (index + 1, word))
-            shares_words_check.append(word)
-        pages.append(text)
-
-    # last page
-    text = Text(header_title, header_icon)
-    for index, word in last:
-        text.mono("%s. %s" % (index + 1, word))
-        shares_words_check.append(word)
-    text.br_half()
-    text.bold("I wrote down all %s" % len(share_words))
-    text.bold("words in order.")
-    pages.append(text)
-
-    # pagination
-    paginated = Paginated(pages)
-
-    if __debug__:
-
-        word_pages = [first] + chunks + [last]
-
-        def export_displayed_words():
-            # export currently displayed mnemonic words into debuglink
-            words = [w for _, w in word_pages[paginated.page]]
-            debug.reset_current_words.publish(words)
-
-        paginated.on_change = export_displayed_words
-        export_displayed_words()
-
-    # make sure we display correct data
-    utils.ensure(share_words == shares_words_check)
-
-    # confirm the share
-    await hold_to_confirm(ctx, paginated)  # TODO: customize the loader here
-
-
-def _slip39_split_share_into_pages(share_words):
-    share = list(enumerate(share_words))  # we need to keep track of the word indices
-    first = share[:2]  # two words on the first page
-    length = len(share_words)
-    if length == 20:
-        middle = share[2:-2]
-        last = share[-2:]  # two words on the last page
-    elif length == 33:
-        middle = share[2:]
-        last = []  # no words at the last page, because it does not add up
-    else:
-        # Invalid number of shares. SLIP-39 allows 20 or 33 words.
-        raise RuntimeError
-
-    chunks = utils.chunks(middle, 4)  # 4 words on the middle pages
-    return first, list(chunks), last
 
 
 class ShamirNumInput(ui.Component):
