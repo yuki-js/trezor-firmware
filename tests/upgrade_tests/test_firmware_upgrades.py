@@ -67,7 +67,7 @@ ALL_TAGS = get_tags()
 
 def for_all(*args, minimum_version=(1, 0, 0)):
     if not args:
-        args = ("core", "legacy")
+        args = ("core",)
 
     all_params = []
     for gen in args:
@@ -116,102 +116,102 @@ def test_upgrade_load(gen, from_tag, to_tag):
         asserts(to_tag, emu.client)
 
 
-@for_all("legacy")
-def test_upgrade_reset(gen, from_tag, to_tag):
-    def asserts(tag, client):
-        check_version(tag, emu.client.version)
-        assert not client.features.pin_protection
-        assert not client.features.passphrase_protection
-        assert client.features.initialized
-        assert client.features.label == LABEL
-        assert client.features.language == LANGUAGE
-        assert not client.features.needs_backup
-        assert not client.features.unfinished_backup
-        assert not client.features.no_backup
+# @for_all("legacy")
+# def test_upgrade_reset(gen, from_tag, to_tag):
+#     def asserts(tag, client):
+#         check_version(tag, emu.client.version)
+#         assert not client.features.pin_protection
+#         assert not client.features.passphrase_protection
+#         assert client.features.initialized
+#         assert client.features.label == LABEL
+#         assert client.features.language == LANGUAGE
+#         assert not client.features.needs_backup
+#         assert not client.features.unfinished_backup
+#         assert not client.features.no_backup
 
-    with EmulatorWrapper(gen, from_tag) as emu:
-        device.reset(
-            emu.client,
-            display_random=False,
-            strength=STRENGTH,
-            passphrase_protection=False,
-            pin_protection=False,
-            label=LABEL,
-            language=LANGUAGE,
-        )
-        device_id = emu.client.features.device_id
-        asserts(from_tag, emu.client)
-        storage = emu.storage()
+#     with EmulatorWrapper(gen, from_tag) as emu:
+#         device.reset(
+#             emu.client,
+#             display_random=False,
+#             strength=STRENGTH,
+#             passphrase_protection=False,
+#             pin_protection=False,
+#             label=LABEL,
+#             language=LANGUAGE,
+#         )
+#         device_id = emu.client.features.device_id
+#         asserts(from_tag, emu.client)
+#         storage = emu.storage()
 
-    with EmulatorWrapper(gen, to_tag, storage=storage) as emu:
-        assert device_id == emu.client.features.device_id
-        asserts(to_tag, emu.client)
-
-
-@for_all()
-def test_upgrade_reset_skip_backup(gen, from_tag, to_tag):
-    def asserts(tag, client):
-        check_version(tag, emu.client.version)
-        assert not client.features.pin_protection
-        assert not client.features.passphrase_protection
-        assert client.features.initialized
-        assert client.features.label == LABEL
-        assert client.features.language == LANGUAGE
-        assert client.features.needs_backup
-        assert not client.features.unfinished_backup
-        assert not client.features.no_backup
-
-    with EmulatorWrapper(gen, from_tag) as emu:
-        device.reset(
-            emu.client,
-            display_random=False,
-            strength=STRENGTH,
-            passphrase_protection=False,
-            pin_protection=False,
-            label=LABEL,
-            language=LANGUAGE,
-            skip_backup=True,
-        )
-        device_id = emu.client.features.device_id
-        asserts(from_tag, emu.client)
-        storage = emu.storage()
-
-    with EmulatorWrapper(gen, to_tag, storage=storage) as emu:
-        assert device_id == emu.client.features.device_id
-        asserts(to_tag, emu.client)
+#     with EmulatorWrapper(gen, to_tag, storage=storage) as emu:
+#         assert device_id == emu.client.features.device_id
+#         asserts(to_tag, emu.client)
 
 
-@for_all(minimum_version=(1, 7, 2))
-def test_upgrade_reset_no_backup(gen, from_tag, to_tag):
-    def asserts(tag, client):
-        check_version(tag, emu.client.version)
-        assert not client.features.pin_protection
-        assert not client.features.passphrase_protection
-        assert client.features.initialized
-        assert client.features.label == LABEL
-        assert client.features.language == LANGUAGE
-        assert not client.features.needs_backup
-        assert not client.features.unfinished_backup
-        assert client.features.no_backup
+# @for_all()
+# def test_upgrade_reset_skip_backup(gen, from_tag, to_tag):
+#     def asserts(tag, client):
+#         check_version(tag, emu.client.version)
+#         assert not client.features.pin_protection
+#         assert not client.features.passphrase_protection
+#         assert client.features.initialized
+#         assert client.features.label == LABEL
+#         assert client.features.language == LANGUAGE
+#         assert client.features.needs_backup
+#         assert not client.features.unfinished_backup
+#         assert not client.features.no_backup
 
-    with EmulatorWrapper(gen, from_tag) as emu:
-        device.reset(
-            emu.client,
-            display_random=False,
-            strength=STRENGTH,
-            passphrase_protection=False,
-            pin_protection=False,
-            label=LABEL,
-            language=LANGUAGE,
-            no_backup=True,
-        )
-        device_id = emu.client.features.device_id
-        asserts(from_tag, emu.client)
-        storage = emu.storage()
+#     with EmulatorWrapper(gen, from_tag) as emu:
+#         device.reset(
+#             emu.client,
+#             display_random=False,
+#             strength=STRENGTH,
+#             passphrase_protection=False,
+#             pin_protection=False,
+#             label=LABEL,
+#             language=LANGUAGE,
+#             skip_backup=True,
+#         )
+#         device_id = emu.client.features.device_id
+#         asserts(from_tag, emu.client)
+#         storage = emu.storage()
 
-    with EmulatorWrapper(gen, to_tag, storage=storage) as emu:
-        assert device_id == emu.client.features.device_id
-        asserts(to_tag, emu.client)
+#     with EmulatorWrapper(gen, to_tag, storage=storage) as emu:
+#         assert device_id == emu.client.features.device_id
+#         asserts(to_tag, emu.client)
+
+
+# @for_all(minimum_version=(1, 7, 2))
+# def test_upgrade_reset_no_backup(gen, from_tag, to_tag):
+#     def asserts(tag, client):
+#         check_version(tag, emu.client.version)
+#         assert not client.features.pin_protection
+#         assert not client.features.passphrase_protection
+#         assert client.features.initialized
+#         assert client.features.label == LABEL
+#         assert client.features.language == LANGUAGE
+#         assert not client.features.needs_backup
+#         assert not client.features.unfinished_backup
+#         assert client.features.no_backup
+
+#     with EmulatorWrapper(gen, from_tag) as emu:
+#         device.reset(
+#             emu.client,
+#             display_random=False,
+#             strength=STRENGTH,
+#             passphrase_protection=False,
+#             pin_protection=False,
+#             label=LABEL,
+#             language=LANGUAGE,
+#             no_backup=True,
+#         )
+#         device_id = emu.client.features.device_id
+#         asserts(from_tag, emu.client)
+#         storage = emu.storage()
+
+#     with EmulatorWrapper(gen, to_tag, storage=storage) as emu:
+#         assert device_id == emu.client.features.device_id
+#         asserts(to_tag, emu.client)
 
 
 if __name__ == "__main__":
