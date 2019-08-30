@@ -58,7 +58,7 @@ async def reset_device(ctx: wire.Context, msg: ResetDevice) -> Success:
     # should we back up the wallet now?
     if not msg.no_backup and not msg.skip_backup:
         if not await layout.confirm_backup(ctx):
-            if not await layout.confirm_backup_again(ctx):
+            if not await layout.confirm_backup(ctx, repeated=True):
                 msg.skip_backup = True
 
     # generate and display backup information for the master secret
