@@ -9,6 +9,7 @@ variables:
 
 build core firmware:
   stage: build
+  when: manual
   script:
     - cd core
     - pipenv run make build_cross
@@ -28,6 +29,7 @@ build core firmware:
 
 build core firmware bitcoinonly:
   stage: build
+  when: manual
   variables:
     BITCOIN_ONLY: "1"
   script:
@@ -46,12 +48,14 @@ build core firmware bitcoinonly:
 
 build core unix:
   stage: build
+  when: manual
   script:
     - cd core
     - pipenv run make build_unix
 
 build core unix frozen:
   stage: build
+  when: manual
   script:
     - cd core
     - pipenv run make build_unix_frozen
@@ -64,6 +68,7 @@ build core unix frozen:
 
 build core unix frozen bitcoinonly:
   stage: build
+  when: manual
   variables:
     BITCOIN_ONLY: "1"
   script:
@@ -79,6 +84,7 @@ build core unix frozen bitcoinonly:
 
 build core unix frozen debug:
   stage: build
+  when: manual
   variables:
     PYOPT: "0"
   script:
@@ -130,6 +136,7 @@ build legacy firmware:
 
 build legacy firmware debug:
   stage: build
+  when: manual
   variables:
     DEBUG_LINK: "1"
     MEMORY_PROTECT: "0"
@@ -139,6 +146,7 @@ build legacy firmware debug:
 
 build legacy firmware bitcoinonly:
   stage: build
+  when: manual
   variables:
     BITCOIN_ONLY: "1"
     MEMORY_PROTECT: "0"
@@ -158,6 +166,7 @@ build legacy firmware bitcoinonly:
 
 build legacy emu:
   stage: build
+  when: manual
   variables:
     DEBUG_LINK: "1"
     EMULATOR: "1"
@@ -172,6 +181,7 @@ build legacy emu:
 
 build legacy emu bitcoinonly:
   stage: build
+  when: manual
   variables:
     BITCOIN_ONLY: "1"
     DEBUG_LINK: "1"

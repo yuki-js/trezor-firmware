@@ -10,7 +10,7 @@ variables:
   # Use shallow cloning to speed up git clone. This can fail, if retrying an older build on CI
   # and the old commit is not in the shallow history any more.
   # See https://docs.gitlab.com/ee/ci/yaml/#shallow-cloning
-  GIT_DEPTH: "50"
+  GIT_DEPTH: "10"
 
   # Run `make` in parallel
   MAKEFLAGS: "-j10"

@@ -4,6 +4,7 @@ image: registry.gitlab.com/satoshilabs/trezor/trezor-firmware/environment
 
 test core unix unit:
   stage: test
+  when: manual
   dependencies:
     - build core unix frozen
   script:
@@ -12,6 +13,7 @@ test core unix unit:
 
 test core unix device:
   stage: test
+  when: manual
   dependencies:
     - build core unix frozen
   script:
@@ -20,6 +22,7 @@ test core unix device:
 
 test core unix device bitcoinonly:
   stage: test
+  when: manual
   dependencies:
     - build core unix frozen bitcoinonly
   variables:
@@ -31,6 +34,7 @@ test core unix device bitcoinonly:
 
 test core unix monero:
   stage: test
+  when: manual
   dependencies:
     - build core unix frozen
   script:
