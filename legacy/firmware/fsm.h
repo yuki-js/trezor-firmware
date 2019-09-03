@@ -28,6 +28,7 @@
 #include "messages-management.pb.h"
 #include "messages-nem.pb.h"
 #include "messages-stellar.pb.h"
+#include "messages-ripple.pb.h"
 
 // message functions
 
@@ -133,4 +134,7 @@ void fsm_msgStellarAccountMergeOp(const StellarAccountMergeOp *msg);
 void fsm_msgStellarManageDataOp(const StellarManageDataOp *msg);
 void fsm_msgStellarBumpSequenceOp(const StellarBumpSequenceOp *msg);
 
+// ripple
+void fsm_msgRippleGetAddress(const RippleGetAddress *msg);
+void fsm_msgRippleSignTx(const RippleSignTx *msg);
 #endif

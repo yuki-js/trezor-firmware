@@ -3,12 +3,12 @@ Q := @
 endif
 
 ifeq ($(BITCOIN_ONLY), 1)
-SKIPPED_MESSAGES := Cardano Tezos Ripple Monero DebugMonero Ontology Eos Binance Ethereum Lisk NEM Stellar
+SKIPPED_MESSAGES := Cardano Tezos Ripple Monero DebugMonero Ontology Eos Binance Ethereum Lisk NEM Stellar Ripple
 else
 SKIPPED_MESSAGES := Cardano Tezos Ripple Monero DebugMonero Ontology Eos Binance
 endif
 
-all: messages_map.h messages_map_limits.h messages-bitcoin.pb.c messages-common.pb.c messages-crypto.pb.c messages-debug.pb.c messages-ethereum.pb.c messages-management.pb.c messages-nem.pb.c messages.pb.c messages-stellar.pb.c messages-lisk.pb.c messages_nem_pb2.py
+all: messages_map.h messages_map_limits.h messages-bitcoin.pb.c messages-common.pb.c messages-crypto.pb.c messages-debug.pb.c messages-ethereum.pb.c messages-management.pb.c messages-nem.pb.c messages.pb.c messages-stellar.pb.c messages-lisk.pb.c messages-ripple.pb.c messages_nem_pb2.py
 
 PYTHON ?= python
 
