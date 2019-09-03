@@ -76,6 +76,11 @@
 #define USE_NEM 0
 #endif
 
+// support Ripple operations
+#ifndef USE_RIPPLE
+#define USE_RIPPLE 0
+#endif
+
 // support MONERO operations
 #ifndef USE_MONERO
 #define USE_MONERO 0

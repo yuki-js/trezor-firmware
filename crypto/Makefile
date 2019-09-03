@@ -32,6 +32,7 @@ CFLAGS += -DUSE_GRAPHENE=1
 CFLAGS += -DUSE_KECCAK=1
 CFLAGS += -DUSE_MONERO=1
 CFLAGS += -DUSE_NEM=1
+CFLAGS += -DUSE_RIPPLE=1
 CFLAGS += -DUSE_CARDANO=1
 CFLAGS += $(shell pkg-config --cflags openssl)
 
@@ -61,12 +62,14 @@ SRCS  += groestl.c
 SRCS  += chacha20poly1305/chacha20poly1305.c chacha20poly1305/chacha_merged.c chacha20poly1305/poly1305-donna.c chacha20poly1305/rfc7539.c
 SRCS  += rc4.c
 SRCS  += nem.c
+SRCS  += ripple.c
 SRCS  += segwit_addr.c cash_addr.c
 SRCS  += memzero.c
 SRCS  += shamir.c
 SRCS  += hmac_drbg.c
 SRCS  += rfc6979.c
 SRCS  += slip39.c
+SRCS  += base58_ripple.c
 
 OBJS   = $(SRCS:.c=.o)
 

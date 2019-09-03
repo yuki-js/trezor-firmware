@@ -59,6 +59,7 @@
 #include "nem.h"
 #include "nem2.h"
 #include "stellar.h"
+#include "ripple.h"
 #endif
 
 // message methods

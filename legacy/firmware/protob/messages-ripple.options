@@ -2,7 +2,7 @@ RippleGetAddress.address_n                 max_count:8
 RippleAddress.address                      max_size:130
 RippleSignTx.address_n                     max_count:8
 RippleSignTx.account_txn_id                max_size:65
-RippleSignTx.memos                         max_count:128
+RippleSignTx.memos                         max_count:8
 RippleSignTx.signers                       max_count:8
 RippleAccountSet.domain                    max_size:256
 RippleAccountSet.email_hash                max_size:33
@@ -33,9 +33,9 @@ RippleSignerEntry.account                  max_size:130
 RippleIssuedAmount.currency                max_size:41
 RippleIssuedAmount.value                   max_size:40
 RippleIssuedAmount.issuer                  max_size:130
-RippleMemo.memo_data                       max_size:256
-RippleMemo.memo_format                     max_size:32
-RippleMemo.memo_type                       max_size:32
+RippleMemo.memo_data                       max_size:64
+RippleMemo.memo_format                     max_size:16
+RippleMemo.memo_type                       max_size:16
 RippleSigner.account                       max_size:130
 RippleSigner.txn_signature                 max_size:128
 RippleSigner.signing_pub_key               max_size:130
