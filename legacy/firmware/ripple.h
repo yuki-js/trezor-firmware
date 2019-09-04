@@ -30,7 +30,7 @@ b.map(c=>`bool ripple_Confirm${c[1]}(const HDNode *node, const Ripple${c[1]} *ms
 #define __RIPPLE_H__
 
 #include <stdbool.h>
-#include "message-ripple.pb.h"
+#include "messages-ripple.pb.h"
 #include "bip32.h"
 
 
