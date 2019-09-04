@@ -119,6 +119,7 @@ int hdnode_nem_decrypt(const HDNode *node, const ed25519_public_key public_key,
 
 #if USE_RIPPLE
 int hdnode_get_ripple_address(const HDNode *node, char *address);
+int hdnode_get_ripple_address_raw(const HDNode *node, uint8_t *raw);
 #endif
 
 int hdnode_sign(HDNode *node, const uint8_t *msg, uint32_t msg_len,

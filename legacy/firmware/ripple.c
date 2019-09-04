@@ -22,7 +22,6 @@
 #include <stdbool.h>
 
 #include "ripple.h"
-#include "../../crypto/ripple.h"
 #include "layout2.h"
 #include "fsm.h"
 #include "messages.pb.h"
@@ -61,7 +60,7 @@ size_t serializeRippleTx(const HDNode *node, const RippleSignTx *msg){
   //type
 
   
-  ripple_get_address_raw(node->public_key, serialized);
+  hdnode_get_ripple_address_raw(node, serialized);
   if(msg){
     
   }
