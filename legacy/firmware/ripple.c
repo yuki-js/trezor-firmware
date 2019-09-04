@@ -22,31 +22,50 @@
 #include <stdbool.h>
 
 #include "ripple.h"
+#include "../../crypto/ripple.h"
 #include "layout2.h"
 #include "fsm.h"
 #include "messages.pb.h"
-#include "message-ripple.pb.h"
+#include "messages-ripple.pb.h"
 #include "gettext.h"
 #include "bitmaps.h"
 #include "bip32.h"
 #include "util.h"
+#include "protect.h"
 
 
 
-bool ripple_ConfirmPayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp){
+bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp){
   layoutRipplePayment(msg->payment.destination,msg->payment.amount,msg->payment.destination_tag);
   if (!protectButton(ButtonRequestType_ButtonRequest_SignTx,false)) {
     fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
     return false;
   }
-  layoutConfirmRippleFee(msg->fee,msg->payment.amount);
+  layoutConfirmRippleFee(msg->fee);
   if (!protectButton(ButtonRequestType_ButtonRequest_SignTx,false)) {
     fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
     return false;
   }
   layoutProgressSwipe(_("Signing transaction"), 0);
+  
+  serializeRippleTx(node,msg);
+  if(resp){
+    
+  }
+  return true;
+}
 
+size_t serializeRippleTx(const HDNode *node, const RippleSignTx *msg){
+  uint8_t serialized[MAX_RIPPLE_TX_SIZE];
+  
+  //type
 
+  
+  ripple_get_address_raw(node->public_key, serialized);
+  if(msg){
+    
+  }
+  return (size_t)4;
 }
 
 
@@ -67,12 +86,10 @@ void layoutRipplePayment(const char *recipient_addr, const uint64_t drops, const
                     str[1], str[2],NULL,NULL);
 
 }
-void layoutConfirmRippleFee(const uint64_t fee, const uint64_t drops){
-  char formatted_amount[MAX_XRP_VALUE_SIZE];
+void layoutConfirmRippleFee(const uint64_t fee){
   char formatted_fee[MAX_XRP_VALUE_SIZE];
-  drops_to_xrp_formatted(drops, formatted_amount);
   drops_to_xrp_formatted(fee, formatted_fee);
   layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL,
-                    _("Confirm transaction"), formatted_amount, _("fee:"),
-                    formated_fee, NULL, NULL);
+                    _("Confirm transaction"), _("fee:"),
+                    formatted_fee, NULL, NULL, NULL);
 }

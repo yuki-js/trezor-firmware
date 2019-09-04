@@ -36,11 +36,14 @@ b.map(c=>`bool ripple_Confirm${c[1]}(const HDNode *node, const Ripple${c[1]} *ms
 
 #define MAX_XRP_VALUE_SIZE 20
 #define MAX_XRP_RECIPIENT_SIZE 40
+#define MAX_RIPPLE_TX_SIZE 1024
 
-bool ripple_ConfirmPayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp);
+
+bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp);
+size_t serializeRippleTx(const HDNode *node, const RippleSignTx *msg);
 
 void layoutRipplePayment(const char *recipient_addr, const uint64_t drops, const uint32_t tag);
-void layoutConfirmRippleFee(const uint64_t fee, const uint64_t drops);
+void layoutConfirmRippleFee(const uint64_t fee);
 
 #endif /* __RIPPLE_H__ */
 

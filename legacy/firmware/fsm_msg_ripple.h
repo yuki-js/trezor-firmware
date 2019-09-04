@@ -53,7 +53,7 @@ void fsm_msgRippleSignTx(const RippleSignTx *msg){
   
   
   if(
-     ( msg->has_payment && !ripple_ConfirmPayment(node, msg, resp) )
+     ( msg->has_payment && !confirmRipplePayment(node, msg, resp) )
      )
     {
       layoutHome();
