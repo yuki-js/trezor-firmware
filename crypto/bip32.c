@@ -765,7 +765,8 @@ int hdnode_get_ripple_address(const HDNode *node, char *address){
   return ripple_get_address(node->public_key, address, 40);
 }
 int hdnode_get_ripple_address_raw(const HDNode *node, uint8_t *raw){
-  return ripple_get_address_raw(node->public_key, raw);
+  ripple_get_address_raw(node->public_key, raw);
+  return 0;
 }
 #endif
 // msg is a data to be signed
