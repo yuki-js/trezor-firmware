@@ -61,6 +61,33 @@ enum RippleType {
                  RippleType_STArray = 15
 };
 
+enum TransactionTypes {
+                       TransactionType_Invalid = -1,
+                       TransactionType_Payment = 0,
+                       TransactionType_EscrowCreate = 1,
+                       TransactionType_EscrowFinish = 2,
+                       TransactionType_AccountSet = 3,
+                       TransactionType_EscrowCancel = 4,
+                       TransactionType_SetRegularKey = 5,
+                       TransactionType_NickNameSet = 6,
+                       TransactionType_OfferCreate = 7,
+                       TransactionType_OfferCancel = 8,
+                       TransactionType_Contract = 9,
+                       TransactionType_TicketCreate = 10,
+                       TransactionType_TicketCancel = 11,
+                       TransactionType_SignerListSet = 12,
+                       TransactionType_PaymentChannelCreate = 13,
+                       TransactionType_PaymentChannelFund = 14,
+                       TransactionType_PaymentChannelClaim = 15,
+                       TransactionType_CheckCreate = 16,
+                       TransactionType_CheckCash = 17,
+                       TransactionType_CheckCancel = 18,
+                       TransactionType_DepositPreauth = 19,
+                       TransactionType_TrustSet = 20,
+                       TransactionType_EnableAmendment = 100,
+                       TransactionType_SetFee = 101,
+};
+
 struct RippleField {
   char fieldName[20];
   short nth;
