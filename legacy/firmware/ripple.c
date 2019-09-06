@@ -98,8 +98,8 @@ struct RippleField rippleFields[] = {
                                      { "Amendment", 19, false, true, true, RippleType_Hash256 },
                                      { "TicketID", 20, false, true, true, RippleType_Hash256 },
                                      { "Digest", 21, false, true, true, RippleType_Hash256 },
-                                     { "hash", 257, false, false, false, RippleType_Hash256 },
-                                     { "index", 258, false, false, false, RippleType_Hash256 },
+                                     { "hash", 1, false, false, false, RippleType_Hash256 }, // overflown
+                                     { "index", 2, false, false, false, RippleType_Hash256 }, // overflown
                                      { "Amount", 1, false, true, true, RippleType_Amount },
                                      { "Balance", 2, false, true, true, RippleType_Amount },
                                      { "LimitAmount", 3, false, true, true, RippleType_Amount },
@@ -113,8 +113,8 @@ struct RippleField rippleFields[] = {
                                      { "MinimumOffer", 16, false, true, true, RippleType_Amount },
                                      { "RippleEscrow", 17, false, true, true, RippleType_Amount },
                                      { "DeliveredAmount", 18, false, true, true, RippleType_Amount },
-                                     { "taker_gets_funded", 258, false, false, false, RippleType_Amount },
-                                     { "taker_pays_funded", 259, false, false, false, RippleType_Amount },
+                                     { "taker_gets_funded", 2, false, false, false, RippleType_Amount }, // what is it
+                                     { "taker_pays_funded", 3, false, false, false, RippleType_Amount }, // what is it
                                      { "PublicKey", 1, true, true, true, RippleType_Blob },
                                      { "MessageKey", 2, true, true, true, RippleType_Blob },
                                      { "SigningPubKey", 3, true, true, true, RippleType_Blob },
@@ -221,7 +221,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   }
 
   uint8_t feeBuf[8];
-  encodeAmount(msg->payment.fee, feeBuf);
+  encodeAmount(msg->fee, feeBuf);
 
   layoutProgressSwipe(_("Calculating address"), 0);
   
@@ -234,37 +234,37 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   layoutProgressSwipe(_("Gathering information"), 0);
   
   TransactionField_t tf_unsigned[]={
-                                    {TransactionField_TransactionType, US2B(TransactionType_Payment)},
-                                    {TransactionField_Flags, UL2B(msg->flags)},
-                                    {TransactionField_Sequence, UL2B(msg->sequence)},
-                                    {TransactionField_DestinationTag, UL2B(msg->payment.destination_tag)},
-                                    {TransactionField_LastLedgerSequence, UL2B(msg->last_ledger_sequence)},
-                                    {TransactionField_Amount, amountBuf},
-                                    {TransactionField_Fee, feeBuf},
-                                    {TransactionField_Account, sourceAccount},
-                                    {TransactionField_Destination, destAccount+(destLen-20)} // I'm not sure destAccount has 20bytes
+                                    {TransactionField_TransactionType, US2B(TransactionType_Payment),2},
+                                    {TransactionField_Flags, UL2B(msg->flags),4},
+                                    {TransactionField_Sequence, UL2B(msg->sequence),4},
+                                    {TransactionField_DestinationTag, UL2B(msg->payment.destination_tag),4},
+                                    {TransactionField_LastLedgerSequence, UL2B(msg->last_ledger_sequence),4},
+                                    {TransactionField_Amount, amountBuf, 8},
+                                    {TransactionField_Fee, feeBuf, 8},
+                                    {TransactionField_Account, sourceAccount, 20},
+                                    {TransactionField_Destination, destAccount+(destLen-20), 20} // I'm not sure destAccount has 20bytes
   };
 
   layoutProgressSwipe(_("Preparing Transaction"), 0);
 
-  uint8_t tx_unsigned[1024];
+  uint8_t tx_unsigned[1024] = {0};
   int serializedSize = serializeRippleTx(tf_unsigned, 9, false, tx_unsigned, 1024);
   if(serializedSize<=0){
     fsm_sendFailure(FailureType_Failure_ProcessError, "Failed to serialize");
     return false;
   }
   
-  memcpy(resp->serialized_tx, tx_unsigned, serializedSize);
+  strlcpy(resp->serialized_tx, tx_unsigned, serializedSize);
   return true;
 }
 
 int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint8_t *serialized, uint32_t maxSerializedSize){
   int serSz = 0;
   // bubble sort by type code then field code
-  for(int i=0;i<nField;i++){
-    for(int j=nField-1;j>i;i--){
-      struct RippleField *left = rippleFields[tf[j-1].field];
-      struct RippleField *right = rippleFields[tf[j].field];
+  for(int i=0; i<nField;i++){
+    for(int j=nField-1; j>i;j--){
+      struct RippleField left = rippleFields[tf[j-1].field]; // this is not pointer
+      struct RippleField right = rippleFields[tf[j].field];
       
       if( right->type < left->type ||
           (right.type == left.type && right.nth < left.nth)){
@@ -277,7 +277,7 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
   // sort end
   
   for (int i=0; i < nField; ++i) {
-    struct RippleField *fieldInfo = rippleFields[tf[j-1].field];
+    struct RippleField fieldInfo = rippleFields[tf[i]->field];
     if(!fieldInfo->isSerialized || (!signing && fieldInfo->isSigningField)){
       continue;
     }
@@ -305,8 +305,8 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
       serialized[serSz]=0;
       serialized[serSz+1]=fieldInfo->type;
       serialized[serSz+2]=fieldInfo->nth;
-      serSz+=3
-        }
+      serSz+=3;
+    }
     // write fieldId end
     
     if(fieldInfo->isVLEncoded){
