@@ -253,8 +253,9 @@ typedef struct TransactionField{
   uint8_t *buf;
   uint32_t vlSize;
 } TransactionField_t;
+
 bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp);
-bool serializeRippleTx(TransactionField_t *tf , uint8_t elems, uint8_t *result, uint32_t *serializedSize){
+bool serializeRippleTx(TransactionField_t *tf, uint8_t elems, uint8_t *serialized, uint32_t *serializedSize);
 void layoutRipplePayment(const char *recipient_addr, const uint64_t drops, const uint32_t tag);
 void layoutConfirmRippleFee(const uint64_t fee);
 
