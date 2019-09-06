@@ -184,15 +184,6 @@ struct RippleField rippleFields[] = {
                                      { "DestinationNode", 9, false, true, true, RippleType_UInt64 }
 };
 
-static uint8_t* toByte(uint64_t num, uint8_t bytes){
-  uint8_t byteArray[bytes];
-  while(bytes){
-    byteArray[bytes-1]=num & 0x00000000000000ff;
-    num=num>>2;
-    bytes--;
-  }
-  return byteArray;
-}
 
 bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp){
   layoutRipplePayment(msg->payment.destination,msg->payment.amount,msg->payment.destination_tag);
@@ -207,14 +198,14 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   }
   layoutProgressSwipe(_("Gathering information"), 0);
   TransactionField_t tf[2]={
-                                  {TransactionField_TransactionType, toByte(TransactionType_Payment, 2), 2},
-                                  {TransactionField_Flags, (uint8_t[]){0,0,0,0}, 4}
+                            {TransactionField_TransactionType, U16TOB(TransactionType_Payment, 2},
+                             {TransactionField_Flags, U32TOB(0), 4}
   };
   if(!serializeRippleTx(tf,2,NULL,NULL)){
     fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
     return false;
   }
-  if(resp){
+  if(node||resp){
     
   }
   return true;
@@ -222,6 +213,8 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
 
 bool serializeRippleTx(TransactionField_t *tf, uint8_t elems, uint8_t *serialized, uint32_t *serializedSize){
   if(tf||elems||serialized||serializedSize){return false;}
+
+  return true;
 }
 
 

@@ -38,6 +38,9 @@
 #define MAX_XRP_RECIPIENT_SIZE 40
 #define MAX_RIPPLE_TX_SIZE 1024
 
+#define U32TOB(NUM) (uint8_t[]){ (NUM & 0xFF000000)>>24, (NUM & 0x00FF0000)>>16, (NUM & 0x0000FF00)>>8, (NUM & 0x000000FF) }
+#define U16TOB(NUM) (uint8_t[]){ (NUM & 0xFF00)>>8, (NUM & 0x00FF) }
+#define U8TOB(NUM) (uint8_t[]){ (NUM & 0xFF) }
 enum RippleType {
                  RippleType_Validation = 10003,
                  RippleType_Done = -1,
