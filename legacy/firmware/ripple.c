@@ -195,9 +195,9 @@ static void encodeAmount(uint64_t amount, uint8_t buf[8]){
   buf[0]=buf[0] | 0x40; // second bit to be one: indicates positive value
   
 }
-static void encodeAmount(double amount, char curCode[4], uint8_t accountId[20], uint8_t buf[48]){
+//static void encodeAmount(double amount, char curCode[4], uint8_t accountId[20], uint8_t buf[48]){
   
-}
+//}
 
 bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp){
   layoutRipplePayment(msg->payment.destination,msg->payment.amount,msg->payment.destination_tag);
@@ -234,15 +234,15 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   layoutProgressSwipe(_("Gathering information"), 0);
   
   TransactionField_t tf_unsigned[]={
-                            {TransactionField_TransactionType, US2B(TransactionType_Payment)},
-                            {TransactionField_Flags, UL2B(msg->flags)},
-                            {TransactionField_Sequence, UL2B(msg->sequence)},
-                            {TransactionField_DestinationTag, UL2B(msg->payment.destination_tag)},
-                            {TransactionField_LastLedgerSequence, UL2B(msg->last_ledger_sequence)},
-                            {TransactionField_Amount, amountBuf},
-                            {TransactionField_Fee, feeBuf},
-                            {TransactionField_Account, sourceAccount},
-                            {TransactionField_Destination, destAccount+(destLen-20)} // I'm not sure destAccount has 20bytes
+                                    {TransactionField_TransactionType, US2B(TransactionType_Payment)},
+                                    {TransactionField_Flags, UL2B(msg->flags)},
+                                    {TransactionField_Sequence, UL2B(msg->sequence)},
+                                    {TransactionField_DestinationTag, UL2B(msg->payment.destination_tag)},
+                                    {TransactionField_LastLedgerSequence, UL2B(msg->last_ledger_sequence)},
+                                    {TransactionField_Amount, amountBuf},
+                                    {TransactionField_Fee, feeBuf},
+                                    {TransactionField_Account, sourceAccount},
+                                    {TransactionField_Destination, destAccount+(destLen-20)} // I'm not sure destAccount has 20bytes
   };
 
   layoutProgressSwipe(_("Preparing Transaction"), 0);
@@ -282,8 +282,8 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
       continue;
     }
     layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL,
-                    _("Confirm field of: "), fieldInfo->fieldName,
-                    NULL, NULL,NULL,NULL);
+                      _("Confirm field of: "), fieldInfo->fieldName,
+                      NULL, NULL,NULL,NULL);
     if (!protectButton(ButtonRequestType_ButtonRequest_SignTx,false)) {
       fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
       return -1;
@@ -306,7 +306,7 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
       serialized[serSz+1]=fieldInfo->type;
       serialized[serSz+2]=fieldInfo->nth;
       serSz+=3
-    }
+        }
     // write fieldId end
     
     if(fieldInfo->isVLEncoded){
@@ -336,14 +336,13 @@ static void drops_to_xrp_formatted(uint64_t value, char *formated_value) {
 void layoutRipplePayment(const char *recipient_addr, const uint64_t drops, const uint32_t tag){
   char formatted_amount[MAX_XRP_VALUE_SIZE];
   char formatted_recipient[MAX_XRP_RECIPIENT_SIZE] ={0};
-  snprintf(formatted_recipient,MAX_XRP_RECIPIENT_SIZE,"%s(Tag:%lu)",recipient_addr,(unsigned long)tag);
+  snprintf(formatted_recipient, MAX_XRP_RECIPIENT_SIZE,"%s(Tag:%lu)", recipient_addr, (unsigned long)tag);
   const char **str =
     split_message((const uint8_t *)formatted_recipient, strlen(formatted_recipient), 16);
   drops_to_xrp_formatted(drops, formatted_amount);
   layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL,
                     _("Confirm sending XRP to:"), str[0],
                     str[1], str[2],NULL,NULL);
-
 }
 void layoutConfirmRippleFee(const uint64_t fee){
   char formatted_fee[MAX_XRP_VALUE_SIZE];
