@@ -185,7 +185,7 @@ struct RippleField rippleFields[] = {
 };
 
 static uint8_t* toByte(uint64_t num, uint8_t bytes){
-  char byteArray[bytes];
+  uint8_t byteArray[bytes];
   while(bytes){
     byteArray[bytes-1]=num & 0x00000000000000ff;
     num=num>>2;
@@ -206,9 +206,9 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
     return false;
   }
   layoutProgressSwipe(_("Gathering information"), 0);
-  struct TransactionField tf[2]={
+  TransactionField_t tf[2]={
                                   {TransactionField_TransactionType, toByte(TransactionType_Payment, 2), 2},
-                                  {TransactionField_Flags, {0,0,0,0}, 4}
+                                  {TransactionField_Flags, (uint8_t[]){0,0,0,0}, 4}
   };
   if(!serializeRippleTx(tf,2,NULL,NULL)){
     fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
