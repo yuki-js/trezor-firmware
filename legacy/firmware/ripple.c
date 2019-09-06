@@ -220,7 +220,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   return true;
 }
 
-bool serializeRippleTx(struct *TransactionField tf, uint8_t elems, uint8_t *result, uint32_t *serializedSize){
+bool serializeRippleTx(TransactionField_t *tf, uint8_t elems, uint8_t *result, uint32_t *serializedSize){
   if(tf||elems||result||serializedSize){return false;}
 }
 
