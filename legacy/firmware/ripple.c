@@ -183,6 +183,17 @@ struct RippleField rippleFields[] = {
                                      { "TickSize", 16, false, true, true, RippleType_UInt8 },
                                      { "DestinationNode", 9, false, true, true, RippleType_UInt64 }
 };
+
+static char* toByte(uint64_t num, uint8_t bytes){:
+  char byteArray[bytes] = {};
+  while(bytes){
+    byteArray[bytes-1]=num & 0x00000000000000ff;
+    num=num>>2;
+    bytes--;
+  }
+  return byteArray;
+}
+
 bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp){
   layoutRipplePayment(msg->payment.destination,msg->payment.amount,msg->payment.destination_tag);
   if (!protectButton(ButtonRequestType_ButtonRequest_SignTx,false)) {
@@ -194,26 +205,23 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
     fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
     return false;
   }
-  layoutProgressSwipe(_("Signing transaction"), 0);
-  
-  serializeRippleTx(node,msg);
+  layoutProgressSwipe(_("Gathering information"), 0);
+  struct TransactionField tf[20]={
+                                  {TransactionField_TransactionType, toByte(TransactionType_Payment, 2), 2},
+                                  {TransactionField_Flags, {0,0,0,0}, 4}
+  };
+  if(!serializeRippleTx(tf,20,NULL,NULL)){
+    fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
+    return false;
+  }
   if(resp){
     
   }
   return true;
 }
 
-size_t serializeRippleTx(const HDNode *node, const RippleSignTx *msg){
-  uint8_t serialized[MAX_RIPPLE_TX_SIZE];
-  
-  //type
-
-  
-  hdnode_get_ripple_address_raw(node, serialized);
-  if(msg){
-    
-  }
-  return (size_t)4;
+bool serializeRippleTx(struct *TransactionField tf, uint8_t elems, uint8_t *result, uint32_t *serializedSize){
+  if(tf||elems||result||serializedSize){return false;}
 }
 
 
