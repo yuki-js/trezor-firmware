@@ -31,6 +31,7 @@
 #include "bip32.h"
 #include "util.h"
 #include "protect.h"
+#include "base58_ripple.h"
 
 struct RippleField rippleFields[] = {
                                      { "Generic", 0, false, false, false, RippleType_Unknown },
@@ -185,36 +186,145 @@ struct RippleField rippleFields[] = {
 };
 
 
+static void encodeAmount(uint64_t amount, uint8_t buf[8]){
+  for(int i=0;i<8;i++){
+    buf[7-i]=amount & 0x00000000000000FF;
+    amount=amount>>8;
+  }
+  buf[0]=buf[0] & 0x7f; // first bit to be zero: indicates XRP amount
+  buf[0]=buf[0] | 0x40; // second bit to be one: indicates positive value
+  
+}
+static void encodeAmount(double amount, char curCode[4], uint8_t accountId[20], uint8_t buf[48]){
+  
+}
+
 bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp){
   layoutRipplePayment(msg->payment.destination,msg->payment.amount,msg->payment.destination_tag);
-  if (!protectButton(ButtonRequestType_ButtonRequest_SignTx,false)) {
+  if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
     fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
     return false;
   }
   layoutConfirmRippleFee(msg->fee);
-  if (!protectButton(ButtonRequestType_ButtonRequest_SignTx,false)) {
+  if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
     fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
     return false;
   }
+  layoutProgressSwipe(_("Calculating amount"), 0);
+  
+  if(msg->payment.has_issued_amount){
+    fsm_sendFailure(FailureType_Failure_UnexpectedMessage, "Non-XRP currency isn't supported for now.");
+    return false;
+  }else{
+    uint8_t amountBuf[8];
+    encodeAmount(msg->payment.amount, amountBuf);
+  }
+
+  uint8_t feeBuf[8];
+  encodeAmount(msg->payment.fee, feeBuf);
+
+  layoutProgressSwipe(_("Calculating address"), 0);
+  
+  uint8_t sourceAccount[20];
+  hdnode_get_ripple_address_raw(node, sourceAccount);
+
+  uint8_t destAccount[21];
+  int destLen = base58r_decode_check(msg->payment.destination, HASHER_SHA2D, destAccount, 21);
+  
   layoutProgressSwipe(_("Gathering information"), 0);
-  TransactionField_t tf[2]={
-                            {TransactionField_TransactionType, U16TOB(TransactionType_Payment) , 2},
-                             {TransactionField_Flags, U32TOB(0), 4}
+  
+  TransactionField_t tf_unsigned[]={
+                            {TransactionField_TransactionType, US2B(TransactionType_Payment)},
+                            {TransactionField_Flags, UL2B(msg->flags)},
+                            {TransactionField_Sequence, UL2B(msg->sequence)},
+                            {TransactionField_DestinationTag, UL2B(msg->payment.destination_tag)},
+                            {TransactionField_LastLedgerSequence, UL2B(msg->last_ledger_sequence)},
+                            {TransactionField_Amount, amountBuf},
+                            {TransactionField_Fee, feeBuf},
+                            {TransactionField_Account, sourceAccount},
+                            {TransactionField_Destination, destAccount+(destLen-20)} // I'm not sure destAccount has 20bytes
   };
-  if(!serializeRippleTx(tf,2,NULL,NULL)){
-    fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
+
+  layoutProgressSwipe(_("Preparing Transaction"), 0);
+
+  uint8_t tx_unsigned[1024];
+  int serializedSize = serializeRippleTx(tf_unsigned, 9, false, tx_unsigned, 1024);
+  if(serializedSize<=0){
+    fsm_sendFailure(FailureType_Failure_ProcessError, "Failed to serialize");
     return false;
   }
-  if(node||resp){
-    
-  }
+  
+  memcpy(resp->serialized_tx, tx_unsigned, serializedSize);
   return true;
 }
 
-bool serializeRippleTx(TransactionField_t *tf, uint8_t elems, uint8_t *serialized, uint32_t *serializedSize){
-  if(tf||elems||serialized||serializedSize){return false;}
+int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint8_t *serialized, uint32_t maxSerializedSize){
+  int serSz = 0;
+  // bubble sort by type code then field code
+  for(int i=0;i<nField;i++){
+    for(int j=nField-1;j>i;i--){
+      struct RippleField *left = rippleFields[tf[j-1].field];
+      struct RippleField *right = rippleFields[tf[j].field];
+      
+      if( right->type < left->type ||
+          (right.type == left.type && right.nth < left.nth)){
+        struct RippleField *temp = right;
+        right=left;
+        left=temp;
+      }
+    }
+  }
+  // sort end
+  
+  for (int i=0; i < nField; ++i) {
+    struct RippleField *fieldInfo = rippleFields[tf[j-1].field];
+    if(!fieldInfo->isSerialized || (!signing && fieldInfo->isSigningField)){
+      continue;
+    }
+    layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL,
+                    _("Confirm field of: "), fieldInfo->fieldName,
+                    NULL, NULL,NULL,NULL);
+    if (!protectButton(ButtonRequestType_ButtonRequest_SignTx,false)) {
+      fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
+      return -1;
+    }
+    
+    // write fieldId
+    if(fieldInfo->type < 16 && fieldInfo->nth < 16){
+      serialized[serSz]=((fieldInfo->type << 4) | fieldInfo->nth);
+      serSz+=1;
+    }else if(fieldInfo->type >= 16 && fieldInfo->nth < 16){
+      serialized[serSz]=fieldInfo->nth;
+      serialized[serSz+1]=fieldInfo->type;
+      serSz+=2;
+    }else if(fieldInfo->type < 16 && fieldInfo->nth >= 16){
+      serialized[serSz]=(fieldInfo->type << 4);
+      serialized[serSz+1]=fieldInfo->nth;
+      serSz+=2;
+    }else if(fieldInfo->type >= 16 && fieldInfo->nth >= 16){
+      serialized[serSz]=0;
+      serialized[serSz+1]=fieldInfo->type;
+      serialized[serSz+2]=fieldInfo->nth;
+      serSz+=3
+    }
+    // write fieldId end
+    
+    if(fieldInfo->isVLEncoded){
+      int vs = fieldInfo->vlSize;
+      if(vs < 192){
+        serialized[serSz]=(uint8_t)(vs & 0x000000FF);
+        serSz+=1;
+      }else if(vs <= 12480){
+        vs -= 193;
+        // getsuyobi wa kokokara. deha, taikin!
+      }
+    }else{
+      
+    }
+  }
 
-  return true;
+
+  return 0;
 }
 
 
