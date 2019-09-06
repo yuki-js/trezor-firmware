@@ -198,7 +198,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   }
   layoutProgressSwipe(_("Gathering information"), 0);
   TransactionField_t tf[2]={
-                            {TransactionField_TransactionType, U16TOB(TransactionType_Payment, 2},
+                            {TransactionField_TransactionType, U16TOB(TransactionType_Payment) , 2},
                              {TransactionField_Flags, U32TOB(0), 4}
   };
   if(!serializeRippleTx(tf,2,NULL,NULL)){
