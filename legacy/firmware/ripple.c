@@ -254,7 +254,8 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
     return false;
   }
   
-  memcpy(resp->serialized_tx, tx_unsigned, serializedSize);
+  memcpy(resp->serialized_tx.bytes, tx_unsigned, serializedSize);
+  resp->serialized_tx.size = serializedSize;
   return true;
 }
 
