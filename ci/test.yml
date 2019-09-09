@@ -1,30 +1,63 @@
 image: registry.gitlab.com/satoshilabs/trezor/trezor-firmware/environment
 
+.only_changes_core: &only_changes_core
+  only:
+    changes:
+      - ci/**/*
+      - common/**/*
+      - core/**/*
+      - crypto/**/*
+      - python/**/*
+      - storage/**/*
+      - tests/**/*
+      - tools/**/*
+      - vendor/**/*
+
+.only_changes_legacy: &only_changes_legacy
+  only:
+    changes:
+      - ci/**/*
+      - common/**/*
+      - crypto/**/*
+      - legacy/**/*
+      - python/**/*
+      - storage/**/*
+      - tests/**/*
+      - tools/**/*
+      - vendor/**/*
+
+
 # Core
 
-test core unix unit:
+core unix unit test:
   stage: test
   when: manual
+  <<: *only_changes_core
+
   dependencies:
-    - build core unix frozen
+    - core unix frozen regular build
   script:
     - cd core
     - pipenv run make test
 
-test core unix device:
+core unix device test:
   stage: test
   when: manual
+  <<: *only_changes_core
+
   dependencies:
-    - build core unix frozen
+    - core unix frozen regular build
   script:
     - cd core
     - pipenv run make test_emu
 
-test core unix device bitcoinonly:
+core unix btconly device test:
   stage: test
   when: manual
+  <<: *only_changes_core
+
   dependencies:
-    - build core unix frozen bitcoinonly
+    - core unix frozen btconly build
   variables:
     MICROPYTHON: "../build/unix/micropython-bitcoinonly"
     TREZOR_PYTEST_SKIP_ALTCOINS: 1
@@ -32,11 +65,13 @@ test core unix device bitcoinonly:
     - cd core
     - pipenv run make test_emu
 
-test core unix monero:
+core unix monero test:
   stage: test
   when: manual
+  <<: *only_changes_core
+
   dependencies:
-    - build core unix frozen
+    - core unix frozen regular build
   script:
     - cd core
     - pipenv run make test_emu_monero
@@ -44,11 +79,16 @@ test core unix monero:
 
 # Crypto
 
-test crypto:
+crypto test:
   stage: test
   when: manual
+  only:
+    changes:
+      - ci/**/*
+      - crypto/**/*
+
   dependencies:
-    - build crypto
+    - crypto build
   script:
     - cd crypto
     - ./tests/aestst
@@ -60,22 +100,26 @@ test crypto:
 
 # Legacy
 
-test legacy emu:
+legacy emu test:
   stage: test
   when: manual
+  <<: *only_changes_legacy
+
   dependencies:
-    - build legacy emu
+    - legacy emu regular build
   variables:
     EMULATOR: "1"
   script:
     - cd legacy
     - pipenv run script/test
 
-test legacy emu bitcoinonly:
+legacy emu btconly test:
   stage: test
   when: manual
+  <<: *only_changes_legacy
+
   dependencies:
-    - build legacy emu bitcoinonly
+    - legacy emu btconly build
   variables:
     EMULATOR: "1"
     EMULATOR_BINARY: "firmware/trezor-bitcoinonly.elf"
@@ -87,9 +131,14 @@ test legacy emu bitcoinonly:
 
 # Python
 
-test python:
+python test:
   stage: test
   when: manual
+  only:
+    changes:
+      - ci/**/*
+      - python/**/*
+
   script:
     - cd python
     - pipenv run tox
@@ -97,9 +146,14 @@ test python:
 
 # Storage
 
-test storage:
+storage test:
   stage: test
   when: manual
+  only:
+    changes:
+      - ci/**/*
+      - storage/**/*
+
   dependencies: []
   script:
     - cd storage/tests
@@ -109,12 +163,15 @@ test storage:
 
 # Other
 
-test upgrade:
+upgrade test:
   stage: test
   when: manual
+  <<: *only_changes_core
+  <<: *only_changes_legacy
+
   dependencies:
-    - build core unix frozen debug
-    - build legacy emu
+    - core unix frozen debug build
+    - legacy emu regular build
   script:
     - tests/upgrade_tests/download_emulators.sh
     - pipenv run pytest tests/upgrade_tests

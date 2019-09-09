@@ -3,8 +3,11 @@ Version 2.x.x [not yet released]
 
 Version 2.1.5 [Sep 2019]
 * Introduce Bitcoin-only firmware
-* Fix Wanchain signing
+* Fix for sluggish U2F authentication when using Shamir
 * Fix UI for Shamir with 33 words
+* Fix Wanchain signing
+* Binance Coin support
+* Introduce Features.Capabilities
 
 Version 2.1.4 [Aug 2019 hotfix]
 * Shamir Backup reset device hotfix

@@ -17,11 +17,11 @@
 import pytest
 
 from trezorlib import btc, debuglink, device
+from trezorlib.messages.PassphraseSourceType import HOST as PASSPHRASE_ON_HOST
 
 from .common import MNEMONIC12, TrezorTest
 
 
-@pytest.mark.skip_t2
 @pytest.mark.setup_client(uninitialized=True)
 class TestDeviceLoad(TrezorTest):
     def test_load_device_1(self, client):
@@ -48,10 +48,15 @@ class TestDeviceLoad(TrezorTest):
             passphrase_protection=True,
             label="test",
         )
+        if client.features.model == "T":
+            device.apply_settings(client, passphrase_source=PASSPHRASE_ON_HOST)
         client.set_passphrase("passphrase")
         state = client.debug.state()
         assert state.mnemonic_secret == MNEMONIC12.encode()
-        assert state.pin == "1234"
+
+        if client.features.model == "1":
+            # we do not send PIN in DebugLinkState in Core
+            assert state.pin == "1234"
         assert state.passphrase_protection is True
 
         address = btc.get_address(client, "Bitcoin", [])
@@ -86,6 +91,8 @@ class TestDeviceLoad(TrezorTest):
             language="english",
             skip_checksum=True,
         )
+        if client.features.model == "T":
+            device.apply_settings(client, passphrase_source=PASSPHRASE_ON_HOST)
         client.set_passphrase(passphrase_nfkd)
         address_nfkd = btc.get_address(client, "Bitcoin", [])
 
@@ -99,6 +106,8 @@ class TestDeviceLoad(TrezorTest):
             language="english",
             skip_checksum=True,
         )
+        if client.features.model == "T":
+            device.apply_settings(client, passphrase_source=PASSPHRASE_ON_HOST)
         client.set_passphrase(passphrase_nfc)
         address_nfc = btc.get_address(client, "Bitcoin", [])
 
@@ -112,6 +121,8 @@ class TestDeviceLoad(TrezorTest):
             language="english",
             skip_checksum=True,
         )
+        if client.features.model == "T":
+            device.apply_settings(client, passphrase_source=PASSPHRASE_ON_HOST)
         client.set_passphrase(passphrase_nfkc)
         address_nfkc = btc.get_address(client, "Bitcoin", [])
 
@@ -125,6 +136,8 @@ class TestDeviceLoad(TrezorTest):
             language="english",
             skip_checksum=True,
         )
+        if client.features.model == "T":
+            device.apply_settings(client, passphrase_source=PASSPHRASE_ON_HOST)
         client.set_passphrase(passphrase_nfd)
         address_nfd = btc.get_address(client, "Bitcoin", [])
 

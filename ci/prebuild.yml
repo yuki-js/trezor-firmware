@@ -1,19 +1,47 @@
 image: registry.gitlab.com/satoshilabs/trezor/trezor-firmware/environment
 
-prebuild style:
+style prebuild:
   stage: prebuild
+
   when: manual
+
+  only:
+    changes:
+      - ci/**/*
+      - "**/*.c"
+      - "**/*.h"
+      - "**/*.py"
+
   script:
     - pipenv run make style_check
 
-prebuild common:
+common prebuild:
   stage: prebuild
+
   when: manual
+
+  only:
+    changes:
+      - ci/**/*
+      - "**/*.json"
+      - "**/*.proto"
+
   script:
     - pipenv run make defs_check
 
-prebuild gen:
+gen prebuild:
   stage: prebuild
+
   when: manual
+
+  only:
+    changes:
+      - ci/**/*
+      - "**/*.c"
+      - "**/*.h"
+      - "**/*.json"
+      - "**/*.proto"
+      - "**/*.py"
+
   script:
     - pipenv run make gen_check

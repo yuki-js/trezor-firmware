@@ -4,12 +4,39 @@ variables:
   SDL_VIDEODRIVER: "dummy"
   XDG_RUNTIME_DIR: "/var/tmp"
 
+.only_changes_core: &only_changes_core
+  only:
+    changes:
+      - ci/**/*
+      - common/**/*
+      - core/**/*
+      - crypto/**/*
+      - python/**/*
+      - storage/**/*
+      - tests/**/*
+      - tools/**/*
+      - vendor/**/*
+
+.only_changes_legacy: &only_changes_legacy
+  only:
+    changes:
+      - ci/**/*
+      - common/**/*
+      - crypto/**/*
+      - legacy/**/*
+      - python/**/*
+      - storage/**/*
+      - tests/**/*
+      - tools/**/*
+      - vendor/**/*
+
 
 # Core
 
-build core firmware:
+core fw regular build:
   stage: build
   when: manual
+  <<: *only_changes_core
   script:
     - cd core
     - pipenv run make build_cross
@@ -30,9 +57,10 @@ build core firmware:
     paths:
       - /builds/yuki-js/trezor-fw/.venv
 
-build core firmware bitcoinonly:
+core fw btconly build:
   stage: build
   when: manual
+  <<: *only_changes_core
   variables:
     BITCOIN_ONLY: "1"
   script:
@@ -49,16 +77,18 @@ build core firmware bitcoinonly:
     - trezor-*.*.*-$CI_COMMIT_SHORT_SHA-bitcoinonly.bin
     expire_in: 1 week
 
-build core unix:
+core unix regular build:
   stage: build
   when: manual
+  <<: *only_changes_core
   script:
     - cd core
     - pipenv run make build_unix
 
-build core unix frozen:
+core unix frozen regular build:
   stage: build
   when: manual
+  <<: *only_changes_core
   script:
     - cd core
     - pipenv run make build_unix_frozen
@@ -69,9 +99,10 @@ build core unix frozen:
     - core/src/trezor/res/resources.py
     expire_in: 1 week
 
-build core unix frozen bitcoinonly:
+core unix frozen btconly build:
   stage: build
   when: manual
+  <<: *only_changes_core
   variables:
     BITCOIN_ONLY: "1"
   script:
@@ -85,9 +116,10 @@ build core unix frozen bitcoinonly:
     - core/src/trezor/res/resources.py
     expire_in: 1 week
 
-build core unix frozen debug:
+core unix frozen debug build:
   stage: build
   when: manual
+  <<: *only_changes_core
   variables:
     PYOPT: "0"
   script:
@@ -101,8 +133,12 @@ build core unix frozen debug:
 
 # Crypto
 
-build crypto:
+crypto build:
   stage: build
+  only:
+    changes:
+      - ci/**/*
+      - crypto/**/*
   script:
     - cd crypto
     - pipenv run make
@@ -119,8 +155,9 @@ build crypto:
 # Legacy
 
 # TODO: add clang https://github.com/trezor/trezor-firmware/issues/44
-build legacy firmware:
+legacy fw regular build:
   stage: build
+  <<: *only_changes_legacy
   variables:
     MEMORY_PROTECT: "0"
   script:
@@ -137,9 +174,10 @@ build legacy firmware:
     - trezor-*.*.*-$CI_COMMIT_SHORT_SHA.bin
     expire_in: 1 week
 
-build legacy firmware debug:
+legacy fw debug build:
   stage: build
   when: manual
+  <<: *only_changes_legacy
   variables:
     DEBUG_LINK: "1"
     MEMORY_PROTECT: "0"
@@ -147,9 +185,10 @@ build legacy firmware debug:
     - cd legacy
     - pipenv run script/cibuild
 
-build legacy firmware bitcoinonly:
+legacy fw btconly build:
   stage: build
   when: manual
+  <<: *only_changes_legacy
   variables:
     BITCOIN_ONLY: "1"
     MEMORY_PROTECT: "0"
@@ -167,9 +206,10 @@ build legacy firmware bitcoinonly:
     - trezor-*.*.*-$CI_COMMIT_SHORT_SHA-bitcoinonly.bin
     expire_in: 1 week
 
-build legacy emu:
+legacy emu regular build:
   stage: build
   when: manual
+  <<: *only_changes_legacy
   variables:
     DEBUG_LINK: "1"
     EMULATOR: "1"
@@ -182,9 +222,10 @@ build legacy emu:
     - legacy/firmware/trezor.elf
     expire_in: 1 week
 
-build legacy emu bitcoinonly:
+legacy emu btconly build:
   stage: build
   when: manual
+  <<: *only_changes_legacy
   variables:
     BITCOIN_ONLY: "1"
     DEBUG_LINK: "1"
