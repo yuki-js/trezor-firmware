@@ -231,7 +231,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   uint8_t destAccount[21];
   int destLen = base58r_decode_check(msg->payment.destination, HASHER_SHA2D, destAccount, 21);
   
-  layoutProgressSwipe(_("Gathering information"), 0);
+  layoutProgressSwipe(_("Gathering information"), 10);
   
   TransactionField_t tf_unsigned[]={
                                     {TransactionField_TransactionType, US2B(TransactionType_Payment),2},
@@ -245,7 +245,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
                                     {TransactionField_Destination, destAccount+(destLen-20), 20} // I'm not sure destAccount has 20bytes
   };
 
-  layoutProgressSwipe(_("Preparing Transaction"), 0);
+  layoutProgressSwipe(_("Preparing Transaction"), 30);
 
   uint8_t tx_unsigned[1024] = {0};
   int serializedSize = serializeRippleTx(tf_unsigned, 9, false, tx_unsigned, 1024);
@@ -253,7 +253,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
     fsm_sendFailure(FailureType_Failure_ProcessError, "Failed to serialize");
     return false;
   }
-  
+  resp.has_serialized_tx = true;
   memcpy(resp->serialized_tx.bytes, tx_unsigned, serializedSize);
   resp->serialized_tx.size = serializedSize;
   return true;
@@ -279,8 +279,8 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
     }
   }
   // sort end
-  
   for (int i=0; i < nField; ++i) {
+    layoutProgressSwipe(_("Serializing Transaction"), 30+i*30);
     struct RippleField fieldInfo = rippleFields[tf[i].field];
     if(!fieldInfo.isSerialized || (!signing && fieldInfo.isSigningField)){
       continue;
