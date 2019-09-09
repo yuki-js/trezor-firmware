@@ -253,7 +253,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
     fsm_sendFailure(FailureType_Failure_ProcessError, "Failed to serialize");
     return false;
   }
-  resp.has_serialized_tx = true;
+  resp->has_serialized_tx = true;
   memcpy(resp->serialized_tx.bytes, tx_unsigned, serializedSize);
   resp->serialized_tx.size = serializedSize;
   return true;
