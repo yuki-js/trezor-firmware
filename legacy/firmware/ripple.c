@@ -211,12 +211,12 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
     return false;
   }
   layoutProgressSwipe(_("Calculating amount"), 0);
-  
+
+  uint8_t amountBuf[8];
   if(msg->payment.has_issued_amount){
     fsm_sendFailure(FailureType_Failure_UnexpectedMessage, "Non-XRP currency isn't supported for now.");
     return false;
   }else{
-    uint8_t amountBuf[8];
     encodeAmount(msg->payment.amount, amountBuf);
   }
 
@@ -254,12 +254,11 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
     return false;
   }
   
-  
-  strlcpy(resp->serialized_tx, tx_unsigned, serializedSize);
+  memcpy(resp->serialized_tx, tx_unsigned, serializedSize);
   return true;
 }
 
-#define COPY_BUF(BYTELEN) memcpy(&serialized[serSz], tf[i]->buf, BYTELEN);serSz += BYTELEN; 
+#define COPY_BUF(BYTELEN) memcpy(&serialized[serSz], tf[i].buf, BYTELEN);serSz += BYTELEN; 
 
 int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint8_t *serialized, uint32_t maxSerializedSize){
   int serSz = 0;
@@ -270,23 +269,23 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
       struct RippleField left = rippleFields[tf[j-1].field]; // this is not pointer
       struct RippleField right = rippleFields[tf[j].field];
       
-      if( right->type < left->type ||
+      if( right.type < left.type ||
           (right.type == left.type && right.nth < left.nth)){
-        struct RippleField *temp = right;
-        right=left;
-        left=temp;
+        TransactionField_t temp = tf[j-1];
+        tf[j-1]=tf[j];
+        tf[j]=temp;
       }
     }
   }
   // sort end
   
   for (int i=0; i < nField; ++i) {
-    struct RippleField fieldInfo = rippleFields[tf[i]->field];
-    if(!fieldInfo->isSerialized || (!signing && fieldInfo->isSigningField)){
+    struct RippleField fieldInfo = rippleFields[tf[i].field];
+    if(!fieldInfo.isSerialized || (!signing && fieldInfo.isSigningField)){
       continue;
     }
     layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL,
-                      _("Confirm field of: "), fieldInfo->fieldName,
+                      _("Confirm field of: "), fieldInfo.fieldName,
                       NULL, NULL,NULL,NULL);
     if (!protectButton(ButtonRequestType_ButtonRequest_SignTx,false)) {
       fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
@@ -296,27 +295,27 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
     // write fieldId
     // See Serializer::addEncoded(int)
     // https://github.com/ripple/rippled/blob/381a1b948b06d9526cc73f14cfc69635fabf8605/src/ripple/protocol/impl/Serializer.cpp#L303
-    if(fieldInfo->type < 16 && fieldInfo->nth < 16){
-      serialized[serSz]=((fieldInfo->type << 4) | fieldInfo->nth);
+    if(fieldInfo.type < 16 && fieldInfo.nth < 16){
+      serialized[serSz]=((fieldInfo.type << 4) | fieldInfo.nth);
       serSz+=1;
-    }else if(fieldInfo->type >= 16 && fieldInfo->nth < 16){
-      serialized[serSz]=fieldInfo->nth;
-      serialized[serSz+1]=fieldInfo->type;
+    }else if(fieldInfo.type >= 16 && fieldInfo.nth < 16){
+      serialized[serSz]=fieldInfo.nth;
+      serialized[serSz+1]=fieldInfo.type;
       serSz+=2;
-    }else if(fieldInfo->type < 16 && fieldInfo->nth >= 16){
-      serialized[serSz]=(fieldInfo->type << 4);
-      serialized[serSz+1]=fieldInfo->nth;
+    }else if(fieldInfo.type < 16 && fieldInfo.nth >= 16){
+      serialized[serSz]=(fieldInfo.type << 4);
+      serialized[serSz+1]=fieldInfo.nth;
       serSz+=2;
-    }else if(fieldInfo->type >= 16 && fieldInfo->nth >= 16){
+    }else if(fieldInfo.type >= 16 && fieldInfo.nth >= 16){
       serialized[serSz]=0;
-      serialized[serSz+1]=fieldInfo->type;
-      serialized[serSz+2]=fieldInfo->nth;
+      serialized[serSz+1]=fieldInfo.type;
+      serialized[serSz+2]=fieldInfo.nth;
       serSz+=3;
     }
     // write fieldId end
     
-    if(fieldInfo->isVLEncoded){
-      int vs = fieldInfo->vlSize;
+    if(fieldInfo.isVLEncoded){
+      int vs = fieldInfo.vlSize;
       if(fieldInfo.type == RippleType_AccountID){
         vs = 20;
       }
@@ -342,19 +341,19 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
       int pos = 0;
       switch(fieldInfo.type){
       case RippleType_UInt8:
-        serialized[serSz]=buf[pos];
+        serialized[serSz]=tf[i].buf[pos];
         serSz++;
         pos++;
       case RippleType_UInt16:
-        serialized[serSz]=buf[pos];
+        serialized[serSz]=tf[i].buf[pos];
         serSz++;
         pos++;
       case RippleType_UInt32:
-        serialized[serSz]=buf[pos];
+        serialized[serSz]=tf[i].buf[pos];
         serSz++;
         pos++;
       case RippleType_UInt64:
-        serialized[serSz]=buf[pos];
+        serialized[serSz]=tf[i].buf[pos];
         serSz++;
         pos++;
         break;
@@ -365,7 +364,7 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
         COPY_BUF(32);
         break;
       case RippleType_Amount:
-        if(tf[i]->buf[0]==0){
+        if(tf[i].buf[0]==0){
           COPY_BUF(8);
         }else{
           COPY_BUF(48);
@@ -380,7 +379,6 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
       return -1;
     }
   }
-
 
   return serSz;
 }
