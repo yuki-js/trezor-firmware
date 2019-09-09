@@ -113,8 +113,8 @@ struct RippleField rippleFields[] = {
                                      { "MinimumOffer", 16, false, true, true, RippleType_Amount },
                                      { "RippleEscrow", 17, false, true, true, RippleType_Amount },
                                      { "DeliveredAmount", 18, false, true, true, RippleType_Amount },
-                                     { "taker_gets_funded", 2, false, false, false, RippleType_Amount }, // what is it
-                                     { "taker_pays_funded", 3, false, false, false, RippleType_Amount }, // what is it
+                                     { "taker_gets_funded", 2, false, false, false, RippleType_Amount }, // what is it? overflown
+                                     { "taker_pays_funded", 3, false, false, false, RippleType_Amount }, // what is it? overflown
                                      { "PublicKey", 1, true, true, true, RippleType_Blob },
                                      { "MessageKey", 2, true, true, true, RippleType_Blob },
                                      { "SigningPubKey", 3, true, true, true, RippleType_Blob },
@@ -249,17 +249,21 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
 
   uint8_t tx_unsigned[1024] = {0};
   int serializedSize = serializeRippleTx(tf_unsigned, 9, false, tx_unsigned, 1024);
-  if(serializedSize<=0){
+  if(serializedSize<0){
     fsm_sendFailure(FailureType_Failure_ProcessError, "Failed to serialize");
     return false;
   }
+  
   
   strlcpy(resp->serialized_tx, tx_unsigned, serializedSize);
   return true;
 }
 
+#define COPY_BUF(BYTELEN) memcpy(&serialized[serSz], tf[i]->buf, BYTELEN);serSz += BYTELEN; 
+
 int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint8_t *serialized, uint32_t maxSerializedSize){
   int serSz = 0;
+  
   // bubble sort by type code then field code
   for(int i=0; i<nField;i++){
     for(int j=nField-1; j>i;j--){
@@ -290,6 +294,8 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
     }
     
     // write fieldId
+    // See Serializer::addEncoded(int)
+    // https://github.com/ripple/rippled/blob/381a1b948b06d9526cc73f14cfc69635fabf8605/src/ripple/protocol/impl/Serializer.cpp#L303
     if(fieldInfo->type < 16 && fieldInfo->nth < 16){
       serialized[serSz]=((fieldInfo->type << 4) | fieldInfo->nth);
       serSz+=1;
@@ -311,20 +317,72 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
     
     if(fieldInfo->isVLEncoded){
       int vs = fieldInfo->vlSize;
+      if(fieldInfo.type == RippleType_AccountID){
+        vs = 20;
+      }
       if(vs < 192){
         serialized[serSz]=(uint8_t)(vs & 0x000000FF);
         serSz+=1;
       }else if(vs <= 12480){
         vs -= 193;
-        // getsuyobi wa kokokara. deha, taikin!
+        serialized[serSz] = 193 + ((uint8_t)(vs >> 8));
+        serialized[serSz+1] = (uint8_t)(vs & 0xff);
+        serSz += 2;
+      }else if(vs <= 918744){
+        vs -= 12481;
+        serialized[serSz] = 241 + ((uint8_t)(vs >> 16));
+        serialized[serSz+1] = (uint8_t)((vs >> 8) & 0xff);
+        serialized[serSz+2] = (uint8_t)(vs && 0xff);
+        serSz += 3;
+      }else{
+        return -1;
       }
+      COPY_BUF(vs);
     }else{
-      
+      int pos = 0;
+      switch(fieldInfo.type){
+      case RippleType_UInt8:
+        serialized[serSz]=buf[pos];
+        serSz++;
+        pos++;
+      case RippleType_UInt16:
+        serialized[serSz]=buf[pos];
+        serSz++;
+        pos++;
+      case RippleType_UInt32:
+        serialized[serSz]=buf[pos];
+        serSz++;
+        pos++;
+      case RippleType_UInt64:
+        serialized[serSz]=buf[pos];
+        serSz++;
+        pos++;
+        break;
+      case RippleType_Hash128:
+        COPY_BUF(16);
+        break;
+      case RippleType_Hash256:
+        COPY_BUF(32);
+        break;
+      case RippleType_Amount:
+        if(tf[i]->buf[0]==0){
+          COPY_BUF(8);
+        }else{
+          COPY_BUF(48);
+        }
+        break;
+      default:
+        return -1;
+        //fields that typecode is greater than 10 is not implemented yet.
+      }
+    }
+    if(serSz <= maxSerializedSize){
+      return -1;
     }
   }
 
 
-  return 0;
+  return serSz;
 }
 
 
