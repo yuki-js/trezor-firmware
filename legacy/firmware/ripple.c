@@ -260,7 +260,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
 
 #define COPY_BUF(BYTELEN) memcpy(&serialized[serSz], tf[i].buf, BYTELEN);serSz += BYTELEN; 
 
-int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint8_t *serialized, uint32_t maxSerializedSize){
+int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint8_t *serialized, int maxSerializedSize){
   int serSz = 0;
   
   // bubble sort by type code then field code
@@ -315,7 +315,7 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
     // write fieldId end
     
     if(fieldInfo.isVLEncoded){
-      int vs = fieldInfo.vlSize;
+      int vs = tf[i].vlSize;
       if(fieldInfo.type == RippleType_AccountID){
         vs = 20;
       }
@@ -338,25 +338,15 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
       }
       COPY_BUF(vs);
     }else{
-      int pos = 0;
       switch(fieldInfo.type){
       case RippleType_UInt8:
-        serialized[serSz]=tf[i].buf[pos];
-        serSz++;
-        pos++;
+        COPY_BUF(1);break;
       case RippleType_UInt16:
-        serialized[serSz]=tf[i].buf[pos];
-        serSz++;
-        pos++;
+        COPY_BUF(2);break;
       case RippleType_UInt32:
-        serialized[serSz]=tf[i].buf[pos];
-        serSz++;
-        pos++;
+        COPY_BUF(4);break;
       case RippleType_UInt64:
-        serialized[serSz]=tf[i].buf[pos];
-        serSz++;
-        pos++;
-        break;
+        COPY_BUF(8);break;
       case RippleType_Hash128:
         COPY_BUF(16);
         break;
