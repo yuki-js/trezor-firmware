@@ -108,7 +108,7 @@ struct RippleField rippleFields[] = {
                                      { "TakerGets", 5, false, true, true, RippleType_Amount },
                                      { "LowLimit", 6, false, true, true, RippleType_Amount },
                                      { "HighLimit", 7, false, true, true, RippleType_Amount },
-                                     { "Fee", 8, false, truethi, true, RippleType_Amount },
+                                     { "Fee", 8, false, true, true, RippleType_Amount },
                                      { "SendMax", 9, false, true, true, RippleType_Amount },
                                      { "DeliverMin", 10, false, true, true, RippleType_Amount },
                                      { "MinimumOffer", 16, false, true, true, RippleType_Amount },
@@ -201,7 +201,7 @@ static void encodeAmount(uint64_t amount, uint8_t buf[8]){
 //}
 
 bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp){
-  layoutRipplePayment(msg->payment.destination,msg->payment.amount,msg->payment.destination_tag);
+  layoutRipplePayment(msg->payment.destination, msg->payment.amount, msg->payment.destination_tag);
   if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
     fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
     return false;
@@ -227,10 +227,10 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   layoutProgress(_("Calculating address"), 0);
   
   uint8_t sourceAccount[20];
-  hdnode_get_ripple_address_raw(node, sourceAccount);
+  //hdnode_get_ripple_address_raw(node, sourceAccount);
 
   uint8_t destAccount[21];
-  int destLen = base58r_decode_check(msg->payment.destination, HASHER_SHA2D, destAccount, 21);
+  //base58r_decode_check(msg->payment.destination, HASHER_SHA2D, destAccount, 21);
   
   layoutProgress(_("Gathering information"), 10);
   
@@ -243,7 +243,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
                                     {TransactionField_Amount, amountBuf, 8},
                                     {TransactionField_Fee, feeBuf, 8},
                                     {TransactionField_Account, sourceAccount, 20},
-                                    {TransactionField_Destination, destAccount+(destLen-20), 20} // I'm not sure destAccount has 20bytes
+                                    {TransactionField_Destination, destAccount, 20} // I'm not sure destAccount has 20bytes
   };
 
   layoutProgress(_("Preparing Transaction"), 30);
@@ -262,6 +262,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   resp->has_serialized_tx = true;
   memcpy(resp->serialized_tx.bytes, tx_unsigned, serializedSize);
   resp->serialized_tx.size = serializedSize;
+  if(node){return true}
   return true;
 }
 
@@ -345,7 +346,7 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool hasSignature,
       }else{
         return -2;
       }
-      COPY_BUF(vs);
+      COPY_BUF( (fieldInfo.type == RippleType_AccountID) ? 20 : tf[i].vlSize );
     }else{
       switch(fieldInfo.type){
       case RippleType_UInt8:
@@ -363,7 +364,7 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool hasSignature,
         COPY_BUF(32);
         break;
       case RippleType_Amount:
-        if(tf[i].buf[0] & 0b10000000==0){
+        if((tf[i].buf[0] & 0b10000000)==0){
           COPY_BUF(8);
         }else{
           COPY_BUF(48);

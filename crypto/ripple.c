@@ -46,5 +46,5 @@ bool ripple_get_address(const uint8_t *public_key, char *address, int addrsize){
 
   ripple_get_address_raw(public_key,raw+1);
   address[0]=0x00; // "r"
-  return base58r_encode_check(raw, 20+1, HASHER_SHA2D,address,addrsize);
+  return base58r_encode_check(raw, 20+1, HASHER_SHA2D, address, addrsize);
 }
