@@ -59,4 +59,6 @@ void fsm_msgRippleSignTx(const RippleSignTx *msg){
       layoutHome();
       return;
     }
+  msg_write(MessageType_MessageType_RippleSignedTx, resp);
+  layoutHome();
 }

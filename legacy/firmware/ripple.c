@@ -22,6 +22,7 @@
 #include <stdbool.h>
 
 #include "ripple.h"
+#include "layout.h"
 #include "layout2.h"
 #include "fsm.h"
 #include "messages.pb.h"
@@ -210,7 +211,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
     fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
     return false;
   }
-  layoutProgressSwipe(_("Calculating amount"), 0);
+  layoutProgress(_("Calculating amount"), 0);
 
   uint8_t amountBuf[8];
   if(msg->payment.has_issued_amount){
@@ -223,7 +224,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   uint8_t feeBuf[8];
   encodeAmount(msg->fee, feeBuf);
 
-  layoutProgressSwipe(_("Calculating address"), 0);
+  layoutProgress(_("Calculating address"), 0);
   
   uint8_t sourceAccount[20];
   hdnode_get_ripple_address_raw(node, sourceAccount);
@@ -231,7 +232,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   uint8_t destAccount[21];
   int destLen = base58r_decode_check(msg->payment.destination, HASHER_SHA2D, destAccount, 21);
   
-  layoutProgressSwipe(_("Gathering information"), 10);
+  layoutProgress(_("Gathering information"), 10);
   
   TransactionField_t tf_unsigned[]={
                                     {TransactionField_TransactionType, US2B(TransactionType_Payment),2},
@@ -245,14 +246,19 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
                                     {TransactionField_Destination, destAccount+(destLen-20), 20} // I'm not sure destAccount has 20bytes
   };
 
-  layoutProgressSwipe(_("Preparing Transaction"), 30);
+  layoutProgress(_("Preparing Transaction"), 30);
 
   uint8_t tx_unsigned[1024] = {0};
   int serializedSize = serializeRippleTx(tf_unsigned, 9, false, tx_unsigned, 1024);
-  if(serializedSize<0){
-    fsm_sendFailure(FailureType_Failure_ProcessError, "Failed to serialize");
+  if(serializedSize<=0){
+    char msg1[64];
+    snprintf(msg1, 34, "Failed to serialize: %d", serializedSize);
+    fsm_sendFailure(FailureType_Failure_ProcessError, msg1);
     return false;
   }
+  
+  layoutProgress(_("Signing"), 700);
+  
   resp->has_serialized_tx = true;
   memcpy(resp->serialized_tx.bytes, tx_unsigned, serializedSize);
   resp->serialized_tx.size = serializedSize;
@@ -261,7 +267,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
 
 #define COPY_BUF(BYTELEN) memcpy(&serialized[serSz], tf[i].buf, BYTELEN);serSz += BYTELEN; 
 
-int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint8_t *serialized, int maxSerializedSize){
+int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool hasSignature, uint8_t *serialized, int maxSerializedSize){
   int serSz = 0;
   
   // bubble sort by type code then field code
@@ -280,16 +286,17 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
   }
   // sort end
   for (int i=0; i < nField; ++i) {
-    layoutProgressSwipe(_("Serializing Transaction"), 30+i*30);
+    layoutProgress(_("Serializing Transaction"), 30+i*30);
     struct RippleField fieldInfo = rippleFields[tf[i].field];
-    if(!fieldInfo.isSerialized || (!signing && fieldInfo.isSigningField)){
+    
+    if(!fieldInfo.isSerialized || (!hasSignature && !fieldInfo.isSigningField)){
       continue;
     }
     layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL,
                       _("Confirm field of: "), fieldInfo.fieldName,
                       NULL, NULL,NULL,NULL);
     if (!protectButton(ButtonRequestType_ButtonRequest_SignTx,false)) {
-      fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
+      //fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
       return -1;
     }
     
@@ -335,7 +342,7 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
         serialized[serSz+2] = (uint8_t)(vs && 0xff);
         serSz += 3;
       }else{
-        return -1;
+        return -2;
       }
       COPY_BUF(vs);
     }else{
@@ -362,12 +369,12 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint
         }
         break;
       default:
-        return -1;
+        return -3;
         //fields that typecode is greater than 10 is not implemented yet.
       }
     }
-    if(serSz <= maxSerializedSize){
-      return -1;
+    if(serSz > maxSerializedSize){
+      return -4;
     }
   }
 
