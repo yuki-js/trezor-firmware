@@ -108,7 +108,7 @@ struct RippleField rippleFields[] = {
                                      { "TakerGets", 5, false, true, true, RippleType_Amount },
                                      { "LowLimit", 6, false, true, true, RippleType_Amount },
                                      { "HighLimit", 7, false, true, true, RippleType_Amount },
-                                     { "Fee", 8, false, true, true, RippleType_Amount },
+                                     { "Fee", 8, false, truethi, true, RippleType_Amount },
                                      { "SendMax", 9, false, true, true, RippleType_Amount },
                                      { "DeliverMin", 10, false, true, true, RippleType_Amount },
                                      { "MinimumOffer", 16, false, true, true, RippleType_Amount },
@@ -301,8 +301,7 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool hasSignature,
     }
     
     // write fieldId
-    // See Serializer::addEncoded(int)
-    // https://github.com/ripple/rippled/blob/381a1b948b06d9526cc73f14cfc69635fabf8605/src/ripple/protocol/impl/Serializer.cpp#L303
+   
     if(fieldInfo.type < 16 && fieldInfo.nth < 16){
       serialized[serSz]=((fieldInfo.type << 4) | fieldInfo.nth);
       serSz+=1;
@@ -323,6 +322,8 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool hasSignature,
     // write fieldId end
     
     if(fieldInfo.isVLEncoded){
+      // See Serializer::addEncoded(int)
+      // https://github.com/ripple/rippled/blob/381a1b948b06d9526cc73f14cfc69635fabf8605/src/ripple/protocol/impl/Serializer.cpp#L303
       int vs = tf[i].vlSize;
       if(fieldInfo.type == RippleType_AccountID){
         vs = 20;
@@ -362,7 +363,7 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool hasSignature,
         COPY_BUF(32);
         break;
       case RippleType_Amount:
-        if(tf[i].buf[0]==0){
+        if(tf[i].buf[0] & 0b10000000==0){
           COPY_BUF(8);
         }else{
           COPY_BUF(48);
