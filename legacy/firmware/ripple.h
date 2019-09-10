@@ -256,12 +256,12 @@ struct RippleField {
 
 typedef struct TransactionField{
   enum TransactionFields field;
-  uint8_t *buf; // if isVLEncoded is false, buf is raw data. VL will be prepended later
+  const uint8_t *buf; // if isVLEncoded is false, buf is raw data. VL will be prepended later
   uint32_t vlSize; // ignored if isVLEncoded is false
 } TransactionField_t;
 
 bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp);
-int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool signing, uint8_t *serialized, int maxSerializedSize);
+int serializeRippleTx(TransactionField_t *tf, size_t nField, bool signing, uint8_t *serialized, int maxSerializedSize);
 void layoutRipplePayment(const char *recipient_addr, const uint64_t drops, const uint32_t tag);
 void layoutConfirmRippleFee(const uint64_t fee);
 

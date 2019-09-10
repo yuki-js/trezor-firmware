@@ -31,6 +31,8 @@
 #include "bitmaps.h"
 #include "bip32.h"
 #include "util.h"
+#include "sha2.h"
+#include "ecdsa.h"
 #include "protect.h"
 #include "base58_ripple.h"
 
@@ -200,6 +202,7 @@ static void encodeAmount(uint64_t amount, uint8_t buf[8]){
   
 //}
 
+
 bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp){
   layoutRipplePayment(msg->payment.destination, msg->payment.amount, msg->payment.destination_tag);
   if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
@@ -226,30 +229,47 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
 
   layoutProgress(_("Calculating address"), 0);
   
-  uint8_t sourceAccount[20];
-  //hdnode_get_ripple_address_raw(node, sourceAccount);
+  uint8_t sourceAccount[20] = {0};
+  hdnode_get_ripple_address_raw(node, sourceAccount);
 
   uint8_t destAccount[21];
-  //base58r_decode_check(msg->payment.destination, HASHER_SHA2D, destAccount, 21);
+  int alen = base58r_decode_check(msg->payment.destination, HASHER_SHA2D, destAccount, 65);
+
+  char mesg[32];
+  snprintf(mesg, 32, "your data: %d", alen);
+  layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL,
+                    mesg, NULL,
+                    NULL, NULL ,NULL,NULL);
+  if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+    fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
+    return false;
+  }
   
   layoutProgress(_("Gathering information"), 10);
   
-  TransactionField_t tf_unsigned[]={
-                                    {TransactionField_TransactionType, US2B(TransactionType_Payment),2},
+  TransactionField_t tf_payment[]={
                                     {TransactionField_Flags, UL2B(msg->flags),4},
+                                    {TransactionField_TransactionType, US2B(TransactionType_Payment),2},
                                     {TransactionField_Sequence, UL2B(msg->sequence),4},
-                                    {TransactionField_DestinationTag, UL2B(msg->payment.destination_tag),4},
                                     {TransactionField_LastLedgerSequence, UL2B(msg->last_ledger_sequence),4},
+                                    {TransactionField_DestinationTag, UL2B(msg->payment.destination_tag),4},
                                     {TransactionField_Amount, amountBuf, 8},
                                     {TransactionField_Fee, feeBuf, 8},
                                     {TransactionField_Account, sourceAccount, 20},
-                                    {TransactionField_Destination, destAccount, 20} // I'm not sure destAccount has 20bytes
+                                    {TransactionField_Destination, destAccount, 20},
+                                    {TransactionField_TxnSignature, NULL, 64},
+                                    {TransactionField_SigningPubKey, node->public_key, 33}
   };
+  size_t tf_payment_length = sizeof(tf_payment) / sizeof(tf_payment[0]);
 
   layoutProgress(_("Preparing Transaction"), 30);
-
+  
   uint8_t tx_unsigned[1024] = {0};
-  int serializedSize = serializeRippleTx(tf_unsigned, 9, false, tx_unsigned, 1024);
+  tx_unsigned[0]=0x53;
+  tx_unsigned[1]=0x54;
+  tx_unsigned[2]=0x58;
+  tx_unsigned[3]=0x00;
+  int serializedSize = serializeRippleTx(tf_payment, tf_payment_length, false, tx_unsigned + 4, 1024 - 4);
   if(serializedSize<=0){
     char msg1[64];
     snprintf(msg1, 34, "Failed to serialize: %d", serializedSize);
@@ -258,26 +278,41 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   }
   
   layoutProgress(_("Signing"), 700);
+  uint8_t txHash[SHA512_DIGEST_LENGTH] = {0};
+  sha512_Raw(tx_unsigned, serializedSize + 4, txHash); // length of (serialized transaction + prefix)
+  uint8_t signature[64] = {0};
+  ecdsa_sign_digest(node->curve->params, node->private_key, txHash, signature, NULL, NULL);
+  resp->has_signature=true;
+  resp->signature.size=64;
+  memcpy(resp->signature.bytes, signature, 64);
   
+  for (int i=0; i < (int)tf_payment_length; ++i) {
+    if(tf_payment[i].field == TransactionField_TxnSignature){
+      tf_payment[i].buf = signature;
+    }
+  }
+  
+  memset(tx_unsigned, 0, 1024); // reinitialize and reuse tx_unsigned buffer
+  serializedSize = serializeRippleTx(tf_payment, tf_payment_length, true, tx_unsigned, 1024);
   resp->has_serialized_tx = true;
   memcpy(resp->serialized_tx.bytes, tx_unsigned, serializedSize);
   resp->serialized_tx.size = serializedSize;
-  if(node){return true}
+
   return true;
 }
 
 #define COPY_BUF(BYTELEN) memcpy(&serialized[serSz], tf[i].buf, BYTELEN);serSz += BYTELEN; 
 
-int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool hasSignature, uint8_t *serialized, int maxSerializedSize){
+int serializeRippleTx(TransactionField_t *tf, size_t nField, bool hasSignature, uint8_t *serialized, int maxSerializedSize){
   int serSz = 0;
   
   // bubble sort by type code then field code
-  for(int i=0; i<nField;i++){
-    for(int j=nField-1; j>i;j--){
+  for(int i=0; i < (int)nField;i++){
+    for(int j = ((int)nField)-1; j>i;j--){
       struct RippleField left = rippleFields[tf[j-1].field]; // this is not pointer
       struct RippleField right = rippleFields[tf[j].field];
       
-      if( right.type < left.type ||
+      if( tf[j-1].field == TransactionField_Invalid || right.type < left.type ||
           (right.type == left.type && right.nth < left.nth)){
         TransactionField_t temp = tf[j-1];
         tf[j-1]=tf[j];
@@ -286,19 +321,11 @@ int serializeRippleTx(TransactionField_t *tf, uint8_t nField, bool hasSignature,
     }
   }
   // sort end
-  for (int i=0; i < nField; ++i) {
+  for (int i=0; i < (int)nField; ++i) {
     layoutProgress(_("Serializing Transaction"), 30+i*30);
     struct RippleField fieldInfo = rippleFields[tf[i].field];
-    
     if(!fieldInfo.isSerialized || (!hasSignature && !fieldInfo.isSigningField)){
       continue;
-    }
-    layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL,
-                      _("Confirm field of: "), fieldInfo.fieldName,
-                      NULL, NULL,NULL,NULL);
-    if (!protectButton(ButtonRequestType_ButtonRequest_SignTx,false)) {
-      //fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
-      return -1;
     }
     
     // write fieldId

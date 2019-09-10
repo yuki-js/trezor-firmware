@@ -50,7 +50,7 @@ void fsm_msgRippleSignTx(const RippleSignTx *msg){
   HDNode *node = fsm_getDerivedNode(SECP256K1_NAME, msg->address_n,
                                     msg->address_n_count, NULL);
   if (!node) return;
-  
+  hdnode_fill_public_key(node);
   
   if(
      ( msg->has_payment && !confirmRipplePayment(node, msg, resp) )
