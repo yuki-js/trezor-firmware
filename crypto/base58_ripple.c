@@ -206,11 +206,11 @@ int base58r_decode_check(const char *str, HasherType hasher_type, uint8_t *data,
   uint8_t d[datalen + 4];
   size_t res = datalen + 4;
   if (b58rtobin(d, &res, str) != true) {
-    return 0;
+    return -5;
   }
   uint8_t *nd = d + datalen + 4 - res;
   if (b58rcheck(nd, res, hasher_type, str) < 0) {
-    return 0;
+    return -10;
   }
   memcpy(data, nd, res - 4);
   return res - 4;
