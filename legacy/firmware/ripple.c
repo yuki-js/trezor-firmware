@@ -198,10 +198,7 @@ static void encodeAmount(uint64_t amount, uint8_t buf[8]){
   buf[0]=buf[0] | 0x40; // second bit to be one: indicates positive value
   
 }
-//static void encodeAmount(double amount, char curCode[4], uint8_t accountId[20], uint8_t buf[48]){
-  
-//}
-
+//static void encodeAmount(double amount, char curCode[4], uint8_t accountId[20], uint8_t buf[48]);
 
 bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp){
   layoutRipplePayment(msg->payment.destination, msg->payment.amount, msg->payment.destination_tag);
@@ -233,17 +230,12 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   hdnode_get_ripple_address_raw(node, sourceAccount);
 
   uint8_t destAccount[21];
-  int alen = base58r_decode_check(msg->payment.destination, HASHER_SHA2D, destAccount, 65);
-
-  char mesg[32];
-  snprintf(mesg, 32, "your data: %d", alen);
-  layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL,
-                    mesg, NULL,
-                    NULL, NULL ,NULL,NULL);
-  if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
-    fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
+  int alen = base58r_decode_check(msg->payment.destination, HASHER_SHA2D, destAccount, 21);
+  if(alen!=21){
+    fsm_sendFailure(FailureType_Failure_ProcessError, _("The length of destination is not 21."));
     return false;
   }
+
   
   layoutProgress(_("Gathering information"), 10);
   
@@ -256,7 +248,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
                                     {TransactionField_Amount, amountBuf, 8},
                                     {TransactionField_Fee, feeBuf, 8},
                                     {TransactionField_Account, sourceAccount, 20},
-                                    {TransactionField_Destination, destAccount, 20},
+                                    {TransactionField_Destination, destAccount+1, 20},
                                     {TransactionField_TxnSignature, NULL, 64},
                                     {TransactionField_SigningPubKey, node->public_key, 33}
   };

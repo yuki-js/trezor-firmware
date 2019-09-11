@@ -30,9 +30,9 @@
 #include "sha2.h"
 
 const char b58rdigits_ordered[] =
-    "rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz";
+  "rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz";
 const int8_t b58rdigits_map[] = {
-    -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,50,33,7,21,41,40,27,45,8,-1,-1,-1,-1,-1,-1,-1,54,10,38,12,14,47,15,16,-1,17,18,19,20,13,-1,22,23,24,25,26,11,28,29,30,31,32,-1,-1,-1,-1,-1,-1,5,34,35,36,37,6,39,3,49,42,43,-1,44,4,46,1,48,0,2,51,52,53,9,55,56,57,-1,-1,-1,-1,-1
+                                 -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,50,33,7,21,41,40,27,45,8,-1,-1,-1,-1,-1,-1,-1,54,10,38,12,14,47,15,16,-1,17,18,19,20,13,-1,22,23,24,25,26,11,28,29,30,31,32,-1,-1,-1,-1,-1,-1,5,34,35,36,37,6,39,3,49,42,43,-1,44,4,46,1,48,0,2,51,52,53,9,55,56,57,-1,-1,-1,-1,-1
 };
 
 bool b58rtobin(void *bin, size_t *binszp, const char *b58) {
@@ -59,7 +59,7 @@ bool b58rtobin(void *bin, size_t *binszp, const char *b58) {
   memzero(outi, sizeof(outi));
 
   // Leading zeros, just count
-  for (i = 0; i < b58sz && b58u[i] == '1'; ++i) ++zerocount;
+  for (i = 0; i < b58sz && b58u[i] == 'r'; ++i) ++zerocount;
 
   for (; i < b58sz; ++i) {
     if (b58u[i] & 0x80)
@@ -123,7 +123,7 @@ bool b58rtobin(void *bin, size_t *binszp, const char *b58) {
 }
 
 int b58rcheck(const void *bin, size_t binsz, HasherType hasher_type,
-             const char *base58str) {
+              const char *base58str) {
   unsigned char buf[32];
   const uint8_t *binc = bin;
   unsigned i;
@@ -133,9 +133,9 @@ int b58rcheck(const void *bin, size_t binsz, HasherType hasher_type,
 
   // Check number of zeros is correct AFTER verifying checksum (to avoid
   // possibility of accessing base58str beyond the end)
-  for (i = 0; binc[i] == '\0' && base58str[i] == '1'; ++i) {
+  for (i = 0; binc[i] == '\0' && base58str[i] == 'r'; ++i) {
   }  // Just finding the end of zeros, nothing to do in loop
-  if (binc[i] == '\0' || base58str[i] == '1') return -3;
+  if (binc[i] == '\0' || base58str[i] == 'r') return -3;
 
   return binc[0];
 }
@@ -200,12 +200,13 @@ int base58r_decode_check(const char *str, HasherType hasher_type, uint8_t *data,
   uint8_t d[datalen + 4];
   size_t res = datalen + 4;
   if (b58rtobin(d, &res, str) != true) {
-    return -5;
+    return 0;
   }
-  uint8_t *nd = d + datalen + 4 - res;
+  uint8_t *nd = d;
   if (b58rcheck(nd, res, hasher_type, str) < 0) {
-    return -10;
+    return 0;
   }
   memcpy(data, nd, res - 4);
   return res - 4;
 }
+
