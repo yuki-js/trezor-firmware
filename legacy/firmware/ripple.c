@@ -255,7 +255,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
                                     {TransactionField_Fee, feeBuf, 8},
                                     {TransactionField_Account, sourceAccount, 20},
                                     {TransactionField_Destination, destAccount+1, 20},
-                                    {TransactionField_TxnSignature, NULL, 64},
+                                    {TransactionField_TxnSignature, NULL, NULL},
                                     {TransactionField_SigningPubKey, node->public_key, 33}
   };
   size_t tf_payment_length = sizeof(tf_payment) / sizeof(tf_payment[0]);
@@ -280,13 +280,16 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   sha512_Raw(tx_unsigned, serializedSize + 4, txHash); // length of (serialized transaction + prefix)
   uint8_t signature[64] = {0};
   ecdsa_sign_digest(node->curve->params, node->private_key, txHash, signature, NULL, NULL);
+  uint8_t derSig[72] = {0};
+  int sigLen = ecdsa_sig_to_der(signature, derSig);
   resp->has_signature=true;
-  resp->signature.size=64;
-  memcpy(resp->signature.bytes, signature, 64);
+  resp->signature.size=sigLen;
+  memcpy(resp->signature.bytes, derSig, sigLen);
   
   for (int i=0; i < (int)tf_payment_length; ++i) {
     if(tf_payment[i].field == TransactionField_TxnSignature){
-      tf_payment[i].buf = signature;
+      tf_payment[i].buf = derSig;
+      tf_payment[i].vlSize = sigLen;
     }
   }
   
