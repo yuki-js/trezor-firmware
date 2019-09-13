@@ -211,6 +211,12 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
     fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
     return false;
   }
+
+  uint32_t flags = 0;
+  if(!msg->has_flags){
+    flags = msg->flags;
+  }
+  flags = flags | FLAG_FULLY_CANONICAL;
   layoutProgress(_("Calculating amount"), 0);
 
   uint8_t amountBuf[8];
@@ -240,7 +246,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   layoutProgress(_("Gathering information"), 10);
   
   TransactionField_t tf_payment[]={
-                                    {TransactionField_Flags, UL2B(msg->flags),4},
+                                    {TransactionField_Flags, UL2B(flags),4},
                                     {TransactionField_TransactionType, US2B(TransactionType_Payment),2},
                                     {TransactionField_Sequence, UL2B(msg->sequence),4},
                                     {TransactionField_LastLedgerSequence, UL2B(msg->last_ledger_sequence),4},
