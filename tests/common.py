@@ -14,15 +14,11 @@
 # You should have received a copy of the License along with this library.
 # If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>.
 
-
 from trezorlib.messages import ButtonRequestType as B
 
 # fmt: off
 #                1      2     3    4      5      6      7     8      9    10    11    12
 MNEMONIC12 = "alcohol woman abuse must during monitor noble actual mixed trade anger aisle"
-MNEMONIC18 = "owner little vague addict embark decide pink prosper true fork panda embody mixture exchange choose canoe electric jewel"
-MNEMONIC24 = "dignity pass list indicate nasty swamp pool script soccer toe leaf photo multiply desk host tomato cradle drill spread actor shine dismiss champion exotic"
-MNEMONIC_ALLALLALL = " ".join(["all"] * 12)
 # fmt: on
 
 MNEMONIC_SHAMIR_20_3of6 = [
@@ -37,17 +33,6 @@ MNEMONIC_SHAMIR_20_2of3_2of3_GROUPS = [
     "gesture negative beard leaf deadline stadium vegan employer armed marathon alien lunar broken edge justice military endorse diet sweater either",
     "gesture negative beard lily desert belong speak realize explain bolt diet believe response counter medal luck wits glance remove ending",
 ]
-
-
-class TrezorTest:
-    mnemonic12 = MNEMONIC12
-    mnemonic18 = MNEMONIC18
-    mnemonic24 = MNEMONIC24
-    mnemonic_all = MNEMONIC_ALLALLALL
-
-    pin4 = "1234"
-    pin6 = "789456"
-    pin8 = "45678978"
 
 
 def generate_entropy(strength, internal_entropy, external_entropy):
@@ -82,6 +67,16 @@ def generate_entropy(strength, internal_entropy, external_entropy):
 
 
 def recovery_enter_shares(debug, shares, groups=False):
+    """Perform the recovery flow for a set of Shamir shares.
+
+    For use in an input flow function.
+    Example:
+
+    def input_flow():
+        yield  # start recovery
+        client.debug.press_yes()
+        yield from recovery_enter_shares(client.debug, SOME_SHARES)
+    """
     word_count = len(shares[0].split(" "))
 
     # Homescreen - proceed to word number selection
@@ -118,3 +113,54 @@ def recovery_enter_shares(debug, shares, groups=False):
         # or Homescreen - confirm success
         yield
         debug.press_yes()
+
+
+def click_through(debug, screens, code=None):
+    """Click through N dialog screens.
+
+    For use in an input flow function.
+    Example:
+
+    def input_flow():
+        # 1. Confirm reset
+        # 2. Backup your seed
+        # 3. Confirm warning
+        # 4. Shares info
+        yield from click_through(client.debug, screens=4, code=B.ResetDevice)
+    """
+    for _ in range(screens):
+        received = yield
+        if code is not None:
+            assert received == code
+        debug.press_yes()
+
+
+def read_and_confirm_mnemonic(debug, words):
+    """Read a given number of mnemonic words from Trezor T screen and correctly
+    answer confirmation questions. Return the full mnemonic.
+
+    For use in an input flow function.
+    Example:
+
+    def input_flow():
+        yield from click_through(client.debug, screens=3)
+
+        yield  # confirm mnemonic entry
+        mnemonic = read_and_confirm_mnemonic(client.debug, words=20)
+    """
+    mnemonic = []
+    while True:
+        mnemonic.extend(debug.read_reset_word().split())
+        if len(mnemonic) < words:
+            debug.swipe_down()
+        else:
+            # last page is confirmation
+            debug.press_yes()
+            break
+
+    # check share
+    for _ in range(3):
+        index = debug.read_reset_word_pos()
+        debug.input(mnemonic[index])
+
+    return " ".join(mnemonic)

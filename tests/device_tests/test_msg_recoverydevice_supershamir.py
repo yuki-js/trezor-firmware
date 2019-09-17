@@ -14,12 +14,11 @@
 # You should have received a copy of the License along with this library.
 # If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>.
 
-
 import pytest
 
 from trezorlib import device, exceptions, messages
 
-from .common import MNEMONIC_SHAMIR_20_2of3_2of3_GROUPS, recovery_enter_shares
+from ..common import MNEMONIC_SHAMIR_20_2of3_2of3_GROUPS, recovery_enter_shares
 
 pytestmark = pytest.mark.skip_t1
 

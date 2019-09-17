@@ -14,12 +14,11 @@
 # You should have received a copy of the License along with this library.
 # If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>.
 
-
 import pytest
 
 from trezorlib import btc
 
-from .common import MNEMONIC_SHAMIR_20_3of6
+from ..common import MNEMONIC_SHAMIR_20_3of6
 
 
 @pytest.mark.setup_client(mnemonic=MNEMONIC_SHAMIR_20_3of6, passphrase=True)

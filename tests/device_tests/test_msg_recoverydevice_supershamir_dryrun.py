@@ -1,9 +1,25 @@
+# This file is part of the Trezor project.
+#
+# Copyright (C) 2012-2019 SatoshiLabs and contributors
+#
+# This library is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License version 3
+# as published by the Free Software Foundation.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the License along with this library.
+# If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>.
+
 import pytest
 
 from trezorlib import device, messages
 from trezorlib.exceptions import TrezorFailure
 
-from .common import MNEMONIC_SHAMIR_20_2of3_2of3_GROUPS, recovery_enter_shares
+from ..common import MNEMONIC_SHAMIR_20_2of3_2of3_GROUPS, recovery_enter_shares
 
 pytestmark = pytest.mark.skip_t1
 

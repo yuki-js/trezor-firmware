@@ -14,13 +14,10 @@
 # You should have received a copy of the License along with this library.
 # If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>.
 
-
 from trezorlib import btc
 
-from .common import TrezorTest
 
-
-class TestMsgVerifymessageSegwitNative(TrezorTest):
+class TestMsgVerifymessageSegwitNative:
     def test_message_long(self, client):
         ret = btc.verify_message(
             client,
