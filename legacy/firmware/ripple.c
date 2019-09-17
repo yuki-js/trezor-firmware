@@ -261,45 +261,55 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   size_t tf_payment_length = sizeof(tf_payment) / sizeof(tf_payment[0]);
 
   layoutProgress(_("Preparing Transaction"), 30);
+
+  if(createRippleSignedTx(node, tf_payment, tf_payment_length, resp) < 0){
+    fsm_sendFailure(FailureType_Failure_ProcessError, _("An error occured during creating signed transaction."));
+    return false;
+  }
   
+  return true;
+}
+
+int createRippleSignedTx(const HDNode *node, TransactionField_t *tf, size_t nField, RippleSignedTx *resp){
   uint8_t tx_unsigned[1024] = {0};
   tx_unsigned[0]=0x53;
   tx_unsigned[1]=0x54;
   tx_unsigned[2]=0x58;
   tx_unsigned[3]=0x00;
-  int serializedSize = serializeRippleTx(tf_payment, tf_payment_length, false, tx_unsigned + 4, 1024 - 4);
+  int serializedSize = serializeRippleTx(tf, nField, false, tx_unsigned + 4, 1024 - 4);
   if(serializedSize<=0){
-    char msg1[34];
-    snprintf(msg1, 34, "Failed to serialize: %d", serializedSize);
-    fsm_sendFailure(FailureType_Failure_ProcessError, msg1);
-    return false;
+    return -1;
   }
-  
-  layoutProgress(_("Signing"), 700);
   uint8_t txHash[SHA512_DIGEST_LENGTH] = {0};
   sha512_Raw(tx_unsigned, serializedSize + 4, txHash); // length of (serialized transaction + prefix)
   uint8_t signature[64] = {0};
   ecdsa_sign_digest(node->curve->params, node->private_key, txHash, signature, NULL, NULL);
   uint8_t derSig[72] = {0};
   int sigLen = ecdsa_sig_to_der(signature, derSig);
+  if(sigLen<=0){
+    return -2;
+  }
   resp->has_signature=true;
   resp->signature.size=sigLen;
   memcpy(resp->signature.bytes, derSig, sigLen);
-  
-  for (int i=0; i < (int)tf_payment_length; ++i) {
-    if(tf_payment[i].field == TransactionField_TxnSignature){
-      tf_payment[i].buf = derSig;
-      tf_payment[i].vlSize = sigLen;
+  for (int i=0; i < (int)nField; ++i) {
+    if(tf[i].field == TransactionField_TxnSignature){
+      tf[i].buf = derSig;
+      tf[i].vlSize = sigLen;
     }
   }
-  
+
   memset(tx_unsigned, 0, 1024); // reinitialize and reuse tx_unsigned buffer
-  serializedSize = serializeRippleTx(tf_payment, tf_payment_length, true, tx_unsigned, 1024);
+  serializedSize = serializeRippleTx(tf, nField, true, tx_unsigned, 1024);
+
+  if(serializedSize<=0){
+    return -3;
+  }
+  
   resp->has_serialized_tx = true;
   memcpy(resp->serialized_tx.bytes, tx_unsigned, serializedSize);
   resp->serialized_tx.size = serializedSize;
-
-  return true;
+  return 0;
 }
 
 #define COPY_BUF(BYTELEN) memcpy(&serialized[serSz], tf[i].buf, BYTELEN);serSz += BYTELEN; 
