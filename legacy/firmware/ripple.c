@@ -255,7 +255,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
                                     {TransactionField_Fee, feeBuf, 8},
                                     {TransactionField_Account, sourceAccount, 20},
                                     {TransactionField_Destination, destAccount+1, 20},
-                                    {TransactionField_TxnSignature, NULL, NULL},
+                                    {TransactionField_TxnSignature, NULL, 0},
                                     {TransactionField_SigningPubKey, node->public_key, 33}
   };
   size_t tf_payment_length = sizeof(tf_payment) / sizeof(tf_payment[0]);
@@ -269,7 +269,7 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   tx_unsigned[3]=0x00;
   int serializedSize = serializeRippleTx(tf_payment, tf_payment_length, false, tx_unsigned + 4, 1024 - 4);
   if(serializedSize<=0){
-    char msg1[64];
+    char msg1[34];
     snprintf(msg1, 34, "Failed to serialize: %d", serializedSize);
     fsm_sendFailure(FailureType_Failure_ProcessError, msg1);
     return false;
