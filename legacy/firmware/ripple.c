@@ -200,6 +200,15 @@ static void encodeAmount(uint64_t amount, uint8_t buf[8]){
 }
 //static void encodeAmount(double amount, char curCode[4], uint8_t accountId[20], uint8_t buf[48]);
 
+static uint32_t setFlags(const RippleSignTx *msg){
+  uint32_t flags = 0;
+  if(!msg->has_flags){
+    flags = msg->flags;
+  }
+  flags = flags | FLAG_FULLY_CANONICAL;
+  return flags;
+}
+
 bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp){
   layoutRipplePayment(msg->payment.destination, msg->payment.amount, msg->payment.destination_tag);
   if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
@@ -212,12 +221,9 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
     return false;
   }
 
-  uint32_t flags = 0;
-  if(!msg->has_flags){
-    flags = msg->flags;
-  }
-  flags = flags | FLAG_FULLY_CANONICAL;
-  layoutProgress(_("Calculating amount"), 0);
+  layoutProgress(_("Preparing Transaction"), 0);
+
+  uint32_t flags = setFlags(msg);
 
   uint8_t amountBuf[8];
   if(msg->payment.has_issued_amount){
@@ -229,8 +235,6 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
 
   uint8_t feeBuf[8];
   encodeAmount(msg->fee, feeBuf);
-
-  layoutProgress(_("Calculating address"), 0);
   
   uint8_t sourceAccount[20] = {0};
   hdnode_get_ripple_address_raw(node, sourceAccount);
@@ -241,26 +245,23 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
     fsm_sendFailure(FailureType_Failure_ProcessError, _("The length of destination is not 21."));
     return false;
   }
-
-  
-  layoutProgress(_("Gathering information"), 10);
   
   TransactionField_t tf_payment[]={
-                                    {TransactionField_Flags, UL2B(flags),4},
-                                    {TransactionField_TransactionType, US2B(TransactionType_Payment),2},
-                                    {TransactionField_Sequence, UL2B(msg->sequence),4},
-                                    {TransactionField_LastLedgerSequence, UL2B(msg->last_ledger_sequence),4},
-                                    {TransactionField_DestinationTag, UL2B(msg->payment.destination_tag),4},
-                                    {TransactionField_Amount, amountBuf, 8},
-                                    {TransactionField_Fee, feeBuf, 8},
-                                    {TransactionField_Account, sourceAccount, 20},
-                                    {TransactionField_Destination, destAccount+1, 20},
-                                    {TransactionField_TxnSignature, NULL, 0},
-                                    {TransactionField_SigningPubKey, node->public_key, 33}
+                                   {TransactionField_Flags, UL2B(flags),4},
+                                   {TransactionField_TransactionType, US2B(TransactionType_Payment),2},
+                                   {TransactionField_Sequence, UL2B(msg->sequence),4},
+                                   {TransactionField_LastLedgerSequence, UL2B(msg->last_ledger_sequence),4},
+                                   {TransactionField_DestinationTag, UL2B(msg->payment.destination_tag),4},
+                                   {TransactionField_Amount, amountBuf, 8},
+                                   {TransactionField_Fee, feeBuf, 8},
+                                   {TransactionField_Account, sourceAccount, 20},
+                                   {TransactionField_Destination, destAccount+1, 20},
+                                   {TransactionField_TxnSignature, NULL, 0},
+                                   {TransactionField_SigningPubKey, node->public_key, 33}
   };
   size_t tf_payment_length = sizeof(tf_payment) / sizeof(tf_payment[0]);
 
-  layoutProgress(_("Preparing Transaction"), 30);
+  
 
   if(createRippleSignedTx(node, tf_payment, tf_payment_length, resp) < 0){
     fsm_sendFailure(FailureType_Failure_ProcessError, _("An error occured during creating signed transaction."));
@@ -268,6 +269,41 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
   }
   
   return true;
+}
+
+bool confirmRippleSignerListSet(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp){
+  layoutRippleSignerListSet();
+  if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+    fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
+    return false;
+  }
+  layoutConfirmRippleFee(msg->fee);
+  if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
+    fsm_sendFailure(FailureType_Failure_ActionCancelled, "Signing cancelled");
+    return false;
+  }
+
+  uint32_t flags = setFlags(msg);
+  
+  uint8_t feeBuf[8];
+  encodeAmount(msg->fee, feeBuf);
+  
+  uint8_t sourceAccount[20] = {0};
+  hdnode_get_ripple_address_raw(node, sourceAccount);
+
+  
+  TransactionField_t tf_payment[]={
+                                   {TransactionField_Flags, UL2B(flags),4},
+                                   {TransactionField_TransactionType, US2B(TransactionType_SignerListSet),2},
+                                   {TransactionField_Sequence, UL2B(msg->sequence),4},
+                                   {TransactionField_LastLedgerSequence, UL2B(msg->last_ledger_sequence),4},
+                                   {TransactionField_Fee, feeBuf, 8},
+                                   {TransactionField_Account, sourceAccount, 20},
+                                   {TransactionField_TxnSignature, NULL, 0},
+                                   {TransactionField_SigningPubKey, node->public_key, 33},
+                                   {TransactionField_SignerQuorum, UL2B(msg->signer_list_set.signer_quorum),4},
+                                   {TransactionField_SignerEntries, NULL, NULL}
+  };
 }
 
 int createRippleSignedTx(const HDNode *node, TransactionField_t *tf, size_t nField, RippleSignedTx *resp){
@@ -437,6 +473,11 @@ void layoutRipplePayment(const char *recipient_addr, const uint64_t drops, const
   layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL,
                     _("Confirm sending XRP to:"), str[0],
                     str[1], str[2],NULL,NULL);
+}
+
+void layoutRippleSignerListSet(){
+  layoutDialogSwipe(&bmp_icon_questionm, _("Cancel"), _("Confirm"), NULL,
+                    _("Confirm setting signers?"), NULL, NULL, NULL, NULL, NULL);
 }
 void layoutConfirmRippleFee(const uint64_t fee){
   char formatted_fee[MAX_XRP_VALUE_SIZE];
