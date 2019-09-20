@@ -94,7 +94,7 @@ def set_canonical_flag(msg: RippleSignTx):
 
 
 def validate(msg: RippleSignTx):
-    if None in (msg.fee, msg.sequence, msg.payment) or (
+    if None in (msg.fee, msg.sequence) or (
             msg.payment
             and None in (msg.payment.amount, msg.payment.destination)):
         raise ProcessError(
