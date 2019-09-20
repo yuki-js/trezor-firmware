@@ -21,7 +21,8 @@ async def sign_tx(ctx, msg: RippleSignTx, keychain):
                               msg.address_n, CURVE)
 
     node = keychain.derive(msg.address_n)
-    source_address = helpers.address_from_public_key(node.public_key())
+    source_address = msg.account if multisig else helpers.address_from_public_key(
+        node.public_key())
 
     fields = tx_field.payment(msg, source_address)
 
@@ -54,7 +55,7 @@ def check_fee(fee: int):
 def get_network_prefix(multisig):
     """Network prefix is prepended before the transaction and public key is included"""
     if multisig:
-        None
+        return helpers.HASH_TX_SIGN_MULTISIG.to_bytes(4, "big")
     else:
         return helpers.HASH_TX_SIGN.to_bytes(4, "big")
 

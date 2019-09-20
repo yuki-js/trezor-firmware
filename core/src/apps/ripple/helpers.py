@@ -9,7 +9,7 @@ from apps.common import HARDENED
 # HASH_TX_ID = const(0x54584E00)  # 'TXN'
 HASH_TX_SIGN = const(0x53545800)  # 'STX'
 # HASH_TX_SIGN_TESTNET = const(0x73747800)  # 'stx'
-
+HASH_TX_SIGN_MULTISIG = const(0x534D5400)  # 'SMT'
 # https://developers.ripple.com/basic-data-types.html#specifying-currency-amounts
 DIVISIBILITY = const(6)  # 1000000 drops equal 1 XRP
 

@@ -30,3 +30,10 @@ async def require_confirm_tx(ctx, to, value):
     text.normal("to")
     text.mono(*split_address(to))
     return await require_hold_to_confirm(ctx, text, ButtonRequestType.SignTx)
+
+
+async def require_confirm_multisig(ctx, account):
+
+    text = Text("Confirm signing multisig account for", ui.ICON_SEND, ui.GREEN)
+    text.mono(*split_address(account))
+    await require_confirm(ctx, text, ButtonRequestType.ConfirmOutput)
