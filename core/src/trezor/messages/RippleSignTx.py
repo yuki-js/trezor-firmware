@@ -45,6 +45,7 @@ class RippleSignTx(p.MessageType):
         signers: List[RippleSigner] = None,
         source_tag: int = None,
         multisig: bool = None,
+        account: str = None,
         account_set: RippleAccountSet = None,
         check_cancel: RippleCheckCancel = None,
         check_cash: RippleCheckCash = None,
@@ -73,6 +74,7 @@ class RippleSignTx(p.MessageType):
         self.signers = signers if signers is not None else []
         self.source_tag = source_tag
         self.multisig = multisig
+        self.account = account
         self.account_set = account_set
         self.check_cancel = check_cancel
         self.check_cash = check_cash
@@ -104,6 +106,7 @@ class RippleSignTx(p.MessageType):
             9: ('signers', RippleSigner, p.FLAG_REPEATED),
             10: ('source_tag', p.UVarintType, 0),
             27: ('multisig', p.BoolType, 0),  # default=false
+            28: ('account', p.UnicodeType, 0),
             11: ('account_set', RippleAccountSet, 0),
             12: ('check_cancel', RippleCheckCancel, 0),
             13: ('check_cash', RippleCheckCash, 0),
