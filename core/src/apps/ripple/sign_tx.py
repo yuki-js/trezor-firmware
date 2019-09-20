@@ -15,7 +15,7 @@ import apps.ripple.transaction_fields as tx_field
 async def sign_tx(ctx, msg: RippleSignTx, keychain):
     validate(msg)
 
-    multisig = msg.multisig
+    multisig = msg.multisig and msg.account
 
     await paths.validate_path(ctx, helpers.validate_full_path, keychain,
                               msg.address_n, CURVE)
@@ -30,6 +30,8 @@ async def sign_tx(ctx, msg: RippleSignTx, keychain):
     tx = serialize(msg, fields, multisig, pubkey=node.public_key())
     to_sign = get_network_prefix(multisig) + tx
 
+    if multisig:
+        await layout.require_confirm_multisig(ctx, msg.account)
     check_fee(msg.fee)
     if msg.payment.destination_tag is not None:
         await layout.require_confirm_destination_tag(
