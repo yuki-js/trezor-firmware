@@ -28,7 +28,22 @@ def serialize(msg: RippleSignTx,
     fields["Account"] = source_address
 
     if multisig:
-        None
+        signers = [{
+            "Signer": {
+                "Account": source_address,
+                "TxnSignature": signature,
+                "SigningPubKey": pubkey
+            }
+        }]
+        for signer in msg.signers:
+            signers.append({
+                "Signer": {
+                    "Account": signer.account,
+                    "TxnSignature": signer.txn_signature,
+                    "SigningPubKey": signer.signing_pub_key
+                }
+            })
+        fields["Signers"] = signers
     else:
         if signature:
             fields["TxnSignature"] = signature

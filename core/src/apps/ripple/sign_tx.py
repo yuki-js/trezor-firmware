@@ -25,7 +25,25 @@ async def sign_tx(ctx, msg: RippleSignTx, keychain):
     source_address = msg.account if multisig else helpers.address_from_public_key(
         node.public_key())
 
-    fields = tx_field.payment(msg)
+    if multisig:
+        await layout.require_confirm_multisig(ctx, msg.account)
+    check_fee(msg.fee)
+    await layout.require_confirm_fee(ctx, msg.fee)
+
+    fields = None
+
+    if msg.payment:
+        if msg.payment.destination_tag is not None:
+            await layout.require_confirm_destination_tag(
+                ctx, msg.payment.destination_tag)
+        await layout.require_confirm_tx(ctx, msg.payment.destination,
+                                        msg.payment.amount)
+        fields = tx_field.payment(msg)
+    elif msg.signer_list_set:
+        await layout.require_confirm_signer_list_set(
+            ctx, msg.signer_list_set.signer_quorum,
+            msg.signer_list_set.signer_entries)
+        fields = tx_field.signer_list_set(msg)
 
     set_canonical_flag(msg)
     tx = serialize(msg,
@@ -34,16 +52,6 @@ async def sign_tx(ctx, msg: RippleSignTx, keychain):
                    source_address,
                    pubkey=node.public_key())
     to_sign = get_network_prefix(multisig) + tx
-
-    if multisig:
-        await layout.require_confirm_multisig(ctx, msg.account)
-    check_fee(msg.fee)
-    if msg.payment.destination_tag is not None:
-        await layout.require_confirm_destination_tag(
-            ctx, msg.payment.destination_tag)
-    await layout.require_confirm_fee(ctx, msg.fee)
-    await layout.require_confirm_tx(ctx, msg.payment.destination,
-                                    msg.payment.amount)
 
     signature = ecdsa_sign(node.private_key(), first_half_of_sha512(to_sign))
     tx = serialize(msg,

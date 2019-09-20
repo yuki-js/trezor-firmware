@@ -2,6 +2,7 @@ from trezor import ui
 from trezor.messages import ButtonRequestType
 from trezor.ui.text import Text
 from trezor.utils import format_amount
+from trezor.ui.scroll import Paginated
 
 from . import helpers
 
@@ -38,3 +39,16 @@ async def require_confirm_multisig(ctx, account):
     text.normal("for multisig account:")
     text.mono(*split_address(account))
     await require_confirm(ctx, text, ButtonRequestType.ConfirmOutput)
+
+
+async def require_confirm_signer_list_set(ctx, quorum, signerEntries):
+    pages = []
+    for i, entry in enumerate(signerEntries):
+        text = Text("Confirm signers #%d" % i, ui.ICON_SEND, ui.GREEN)
+        text.normal("Quorum: %d" % quorum)
+        text.mono(*split_address(entry.account))
+        text.normal("Weight: %d" % entry.signer_weight)
+        pages.append(text)
+    paginated = Paginated(pages)
+    await require_hold_to_confirm(ctx, paginated,
+                                  ButtonRequestType.ConfirmOutput)

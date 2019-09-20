@@ -1,4 +1,5 @@
 from apps.ripple.binary_field import field as binfield
+import apps.ripple.layout
 
 
 def payment(msg):
@@ -13,7 +14,7 @@ def payment(msg):
     }
 
 
-def signerListSet(msg):
+def signer_list_set(msg):
     if not msg.signer_list_set:
         return
 
