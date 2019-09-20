@@ -13,15 +13,20 @@ from trezor.messages.RippleSignTx import RippleSignTx
 from . import helpers
 
 from .binary_field import field as binfield
-from trezor import log
 
 
 def serialize(msg: RippleSignTx,
               fields: dict,
               multisig: bool,
+              source_address,
               pubkey=None,
               signature=None) -> bytearray:
-    """Serialize transaction"""
+    """Append common field and serialize transaction"""
+    fields["Flags"] = msg.flags
+    fields["Sequence"] = msg.sequence
+    fields["Fee"] = msg.fee
+    fields["Account"] = source_address
+
     if multisig:
         None
     else:
@@ -49,7 +54,6 @@ def serialize_raw(fields: dict) -> bytearray:
                 farr[j - 1], farr[j] = farr[j], farr[j - 1]
 
     for k in farr:
-        log.debug("ripple", k)
         write(w, binfield["FIELDS"][k], fields[k])
     return w
 

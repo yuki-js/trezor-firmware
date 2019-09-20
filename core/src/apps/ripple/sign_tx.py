@@ -10,12 +10,13 @@ from apps.ripple import CURVE, helpers, layout
 from apps.ripple.serialize import serialize
 
 import apps.ripple.transaction_fields as tx_field
+from trezor import log
 
 
 async def sign_tx(ctx, msg: RippleSignTx, keychain):
     validate(msg)
 
-    multisig = msg.multisig and msg.account
+    multisig = bool(msg.multisig and msg.account)
 
     await paths.validate_path(ctx, helpers.validate_full_path, keychain,
                               msg.address_n, CURVE)
@@ -24,10 +25,14 @@ async def sign_tx(ctx, msg: RippleSignTx, keychain):
     source_address = msg.account if multisig else helpers.address_from_public_key(
         node.public_key())
 
-    fields = tx_field.payment(msg, source_address)
+    fields = tx_field.payment(msg)
 
     set_canonical_flag(msg)
-    tx = serialize(msg, fields, multisig, pubkey=node.public_key())
+    tx = serialize(msg,
+                   fields,
+                   multisig,
+                   source_address,
+                   pubkey=node.public_key())
     to_sign = get_network_prefix(multisig) + tx
 
     if multisig:
@@ -44,6 +49,7 @@ async def sign_tx(ctx, msg: RippleSignTx, keychain):
     tx = serialize(msg,
                    fields,
                    multisig,
+                   source_address,
                    pubkey=node.public_key(),
                    signature=signature)
     return RippleSignedTx(signature, tx)
