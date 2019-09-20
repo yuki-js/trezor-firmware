@@ -40,7 +40,7 @@ message RippleSignTx {
     repeated RippleSigner signers = 9;          // array of objects that represent a multi-signature
     optional uint32 source_tag = 10;            // identify the reason for this payment, or a sender on whose behalf this transaction is made.
 
-    optional bool multisig = 27;                // whether multisigning or not (not in original ripple field)
+    optional bool multisig = 27 [default=false];                // whether multisigning or not (not in original ripple field)
 
 
     // Transaction fields

@@ -21,7 +21,7 @@ def serialize(msg: RippleSignTx,
               multisig: bool,
               pubkey=None,
               signature=None) -> bytearray:
-
+    """Serialize transaction"""
     if multisig:
         None
     else:
@@ -34,6 +34,7 @@ def serialize(msg: RippleSignTx,
 
 
 def serialize_raw(fields: dict) -> bytearray:
+    """Serialize transaction field dict into signable format"""
     w = bytearray()
     farr = list(fields.keys())
     n = len(fields)
@@ -53,6 +54,14 @@ def serialize_raw(fields: dict) -> bytearray:
     return w
 
 
+def serialize_array(farr: list):
+    """Serialize array"""
+    w = bytearray()
+    for f in farr:
+        w.extend(serialize_raw(f))
+    return w
+
+
 def write(w: bytearray, field: dict, value):
     if value is None:
         return
@@ -68,7 +77,8 @@ def write(w: bytearray, field: dict, value):
     elif field["type"] == binfield["TYPES"]["Blob"]:
         write_bytes(w, value)
     elif field["type"] == binfield["TYPES"]["STArray"]:
-        None
+        w.extend(serialize_array(value) +
+                 b'\xf1')  # STObject end with 0xf1(ArrayEndMarker)
     elif field["type"] == binfield["TYPES"]["STObject"]:
         w.extend(serialize_raw(value) +
                  b'\xe1')  # STObject end with 0xe1(ObjectEndMarker)

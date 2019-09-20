@@ -9,11 +9,13 @@ from apps.common import paths
 from apps.ripple import CURVE, helpers, layout
 from apps.ripple.serialize import serialize
 
-from .binary_field import field as binfield
+import apps.ripple.transaction_fields as tx_field
 
 
 async def sign_tx(ctx, msg: RippleSignTx, keychain):
     validate(msg)
+
+    multisig = msg.multisig
 
     await paths.validate_path(ctx, helpers.validate_full_path, keychain,
                               msg.address_n, CURVE)
@@ -21,21 +23,11 @@ async def sign_tx(ctx, msg: RippleSignTx, keychain):
     node = keychain.derive(msg.address_n)
     source_address = helpers.address_from_public_key(node.public_key())
 
-    fields = {
-        "TransactionType": binfield["TRANSACTION_TYPES"]["Payment"],
-        "Flags": msg.flags,
-        "Sequence": msg.sequence,
-        "DestinationTag": msg.payment.destination_tag,
-        "LastLedgerSequence": msg.last_ledger_sequence,
-        "Amount": msg.payment.amount,
-        "Fee": msg.fee,
-        "Account": source_address,
-        "Destination": msg.payment.destination
-    }
+    fields = tx_field.payment(msg, source_address)
 
     set_canonical_flag(msg)
-    tx = serialize(msg, fields, False, pubkey=node.public_key())
-    to_sign = get_network_prefix() + tx
+    tx = serialize(msg, fields, multisig, pubkey=node.public_key())
+    to_sign = get_network_prefix(multisig) + tx
 
     check_fee(msg.fee)
     if msg.payment.destination_tag is not None:
@@ -48,7 +40,7 @@ async def sign_tx(ctx, msg: RippleSignTx, keychain):
     signature = ecdsa_sign(node.private_key(), first_half_of_sha512(to_sign))
     tx = serialize(msg,
                    fields,
-                   False,
+                   multisig,
                    pubkey=node.public_key(),
                    signature=signature)
     return RippleSignedTx(signature, tx)
@@ -59,9 +51,12 @@ def check_fee(fee: int):
         raise ProcessError("Fee must be in the range of 10 to 10,000 drops")
 
 
-def get_network_prefix():
+def get_network_prefix(multisig):
     """Network prefix is prepended before the transaction and public key is included"""
-    return helpers.HASH_TX_SIGN.to_bytes(4, "big")
+    if multisig:
+        None
+    else:
+        return helpers.HASH_TX_SIGN.to_bytes(4, "big")
 
 
 def first_half_of_sha512(b):
