@@ -10,7 +10,7 @@ if False:
 APP_DEVICE             = const(0x01)
 APP_RECOVERY           = const(0x02)
 APP_RECOVERY_SHARES    = const(0x03)
-APP_FIDO2              = const(0x04)
+APP_WEBAUTHN           = const(0x04)
 # fmt: on
 
 _FALSE_BYTE = b"\x00"
@@ -28,8 +28,8 @@ def get(app: int, key: int, public: bool = False) -> Optional[bytes]:
     return config.get(app, key, public)
 
 
-def delete(app: int, key: int) -> None:
-    config.delete(app, key)
+def delete(app: int, key: int, public: bool = False) -> None:
+    config.delete(app, key, public)
 
 
 def set_true_or_delete(app: int, key: int, value: bool) -> None:

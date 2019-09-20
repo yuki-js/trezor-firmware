@@ -91,6 +91,12 @@ def change_pin(client, remove=False):
 
 
 @expect(proto.Success, field="message")
+def sd_protect(client, operation):
+    ret = client.call(proto.SdProtect(operation=operation))
+    return ret
+
+
+@expect(proto.Success, field="message")
 def set_u2f_counter(client, u2f_counter):
     ret = client.call(proto.SetU2FCounter(u2f_counter=u2f_counter))
     return ret
@@ -167,7 +173,7 @@ def reset(
     u2f_counter=0,
     skip_backup=False,
     no_backup=False,
-    backup_type=proto.ResetDeviceBackupType.Bip39,
+    backup_type=proto.BackupType.Bip39,
 ):
     if client.features.initialized:
         raise RuntimeError(
