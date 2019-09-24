@@ -30,7 +30,7 @@ def serialize(msg: RippleSignTx,
     if multisig:
         signers = [{
             "Signer": {
-                "Account": source_address,
+                "Account": helpers.address_from_public_key(pubkey),
                 "TxnSignature": signature,
                 "SigningPubKey": pubkey
             }
