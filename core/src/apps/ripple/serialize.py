@@ -51,10 +51,10 @@ def serialize(msg: RippleSignTx,
         if pubkey:
             fields["SigningPubKey"] = pubkey
     # must be sorted numerically first by type and then by name
-    return serialize_raw(fields)
+    return serialize_raw(fields, signature is not None)
 
 
-def serialize_raw(fields: dict) -> bytearray:
+def serialize_raw(fields: dict, isSigning) -> bytearray:
     """Serialize transaction field dict into signable format"""
     w = bytearray()
     farr = list(fields.keys())
@@ -70,7 +70,11 @@ def serialize_raw(fields: dict) -> bytearray:
                 farr[j - 1], farr[j] = farr[j], farr[j - 1]
 
     for k in farr:
-        write(w, binfield["FIELDS"][k], fields[k])
+        fInfo = binfield["FIELDS"][k]
+        if (not fInfo["isSerialized"]) or not (isSigning
+                                               or fInfo["isSigningField"]):
+            continue
+        write(w, fInfo, fields[k])
     return w
 
 
