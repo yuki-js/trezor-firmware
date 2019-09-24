@@ -35,7 +35,6 @@ variables:
 
 core fw regular build:
   stage: build
-  when: manual
   <<: *only_changes_core
   script:
     - cd core

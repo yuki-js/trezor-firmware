@@ -54,7 +54,7 @@ def serialize(msg: RippleSignTx,
     return serialize_raw(fields, signature is not None)
 
 
-def serialize_raw(fields: dict, isSigning) -> bytearray:
+def serialize_raw(fields: dict, isSigning=True) -> bytearray:
     """Serialize transaction field dict into signable format"""
     w = bytearray()
     farr = list(fields.keys())
