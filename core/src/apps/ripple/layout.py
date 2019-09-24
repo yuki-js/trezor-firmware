@@ -52,3 +52,30 @@ async def require_confirm_signer_list_set(ctx, quorum, signerEntries):
     paginated = Paginated(pages)
     await require_hold_to_confirm(ctx, paginated,
                                   ButtonRequestType.ConfirmOutput)
+
+
+async def require_confirm_account_set(ctx, account_set):
+    pages = []
+    if account_set.set_flag:
+        text = Text("Confirm AccountSet")
+        text.normal("SetFlag: ")
+        text.bold(account_set.set_flag)
+        pages.append(text)
+    if account_set.clear_flag:
+        text = Text("Confirm AccountSet")
+        text.normal("ClearFlag: ")
+        text.bold(account_set.clear_flag)
+        pages.append(text)
+    if account_set.transfer_rate:
+        text = Text("Confirm AccountSet")
+        text.normal("TransferRate: ")
+        text.bold(account_set.transfer_rate)
+        pages.append(text)
+    if account_set.tick_size:
+        text = Text("Confirm AccountSet")
+        text.normal("TickSize: ")
+        text.bold(account_set.tick_size)
+        pages.append(text)
+    paginated = Paginated(pages)
+    await require_hold_to_confirm(ctx, paginated,
+                                  ButtonRequestType.ConfirmOutput)

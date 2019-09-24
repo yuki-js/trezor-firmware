@@ -44,6 +44,7 @@ def serialize(msg: RippleSignTx,
                 }
             })
         fields["Signers"] = signers
+        fields["SigningPubKey"] = b''  # ripplerm says so
     else:
         if signature:
             fields["TxnSignature"] = signature

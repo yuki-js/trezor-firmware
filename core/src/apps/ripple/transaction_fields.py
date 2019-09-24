@@ -1,5 +1,4 @@
 from apps.ripple.binary_field import field as binfield
-import apps.ripple.layout
 
 
 def payment(msg):
@@ -31,4 +30,19 @@ def signer_list_set(msg):
             }
         })
     field["SignerEntries"] = entries
+    return field
+
+
+def account_set(msg):
+    if not msg.account_set:
+        return
+
+    field = {
+        "TransactionType": binfield["TRANSACTION_TYPES"]["AccountSet"],
+    }
+    if msg.account_set.set_flag:
+        field["SetFlag"] = msg.account_set.set_flag
+    if msg.account_set.clear_flag:
+        field["ClearFlag"] = msg.account_set.clear_flag
+    # wip
     return field

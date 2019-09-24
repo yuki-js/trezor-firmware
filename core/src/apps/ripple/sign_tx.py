@@ -44,6 +44,11 @@ async def sign_tx(ctx, msg: RippleSignTx, keychain):
             ctx, msg.signer_list_set.signer_quorum,
             msg.signer_list_set.signer_entries)
         fields = tx_field.signer_list_set(msg)
+    elif msg.account_set:
+        await layout.require_confirm_account_set(ctx, msg.account_set)
+        fields = tx_field.account_set(msg)
+    else:
+        raise ValueError("The message is not supported.")
 
     set_canonical_flag(msg)
     tx = serialize(msg,
