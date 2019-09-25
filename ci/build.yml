@@ -50,15 +50,11 @@ core fw regular build:
   artifacts:
     name: "$CI_JOB_NAME-$CI_COMMIT_SHORT_SHA"
     paths:
-    - /builds/yuki-js/trezor-fw/
+    - trezor-*.*.*-$CI_COMMIT_SHORT_SHA.bin
     expire_in: 1 week
-  cache:
-    paths:
-      - /builds/yuki-js/trezor-fw/.venv
 
 core fw btconly build:
   stage: build
-  when: manual
   <<: *only_changes_core
   variables:
     BITCOIN_ONLY: "1"
@@ -78,7 +74,6 @@ core fw btconly build:
 
 core unix regular build:
   stage: build
-  when: manual
   <<: *only_changes_core
   script:
     - cd core
@@ -86,7 +81,6 @@ core unix regular build:
 
 core unix frozen regular build:
   stage: build
-  when: manual
   <<: *only_changes_core
   script:
     - cd core
@@ -100,7 +94,6 @@ core unix frozen regular build:
 
 core unix frozen btconly build:
   stage: build
-  when: manual
   <<: *only_changes_core
   variables:
     BITCOIN_ONLY: "1"
@@ -117,7 +110,6 @@ core unix frozen btconly build:
 
 core unix frozen debug build:
   stage: build
-  when: manual
   <<: *only_changes_core
   variables:
     PYOPT: "0"
@@ -175,7 +167,6 @@ legacy fw regular build:
 
 legacy fw debug build:
   stage: build
-  when: manual
   <<: *only_changes_legacy
   variables:
     DEBUG_LINK: "1"
@@ -186,7 +177,6 @@ legacy fw debug build:
 
 legacy fw btconly build:
   stage: build
-  when: manual
   <<: *only_changes_legacy
   variables:
     BITCOIN_ONLY: "1"
@@ -207,7 +197,6 @@ legacy fw btconly build:
 
 legacy emu regular build:
   stage: build
-  when: manual
   <<: *only_changes_legacy
   variables:
     DEBUG_LINK: "1"
@@ -223,7 +212,6 @@ legacy emu regular build:
 
 legacy emu btconly build:
   stage: build
-  when: manual
   <<: *only_changes_legacy
   variables:
     BITCOIN_ONLY: "1"

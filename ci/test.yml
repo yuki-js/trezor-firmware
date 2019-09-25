@@ -31,9 +31,7 @@ image: registry.gitlab.com/satoshilabs/trezor/trezor-firmware/environment
 
 core unix unit test:
   stage: test
-  when: manual
   <<: *only_changes_core
-
   dependencies:
     - core unix frozen regular build
   script:
@@ -42,9 +40,7 @@ core unix unit test:
 
 core unix device test:
   stage: test
-  when: manual
   <<: *only_changes_core
-
   dependencies:
     - core unix frozen regular build
   script:
@@ -53,9 +49,7 @@ core unix device test:
 
 core unix btconly device test:
   stage: test
-  when: manual
   <<: *only_changes_core
-
   dependencies:
     - core unix frozen btconly build
   variables:
@@ -67,9 +61,7 @@ core unix btconly device test:
 
 core unix monero test:
   stage: test
-  when: manual
   <<: *only_changes_core
-
   dependencies:
     - core unix frozen regular build
   script:
@@ -102,12 +94,10 @@ core unix upgrade test:
 
 crypto test:
   stage: test
-  when: manual
   only:
     changes:
       - ci/**/*
       - crypto/**/*
-
   dependencies:
     - crypto build
   script:
@@ -123,9 +113,7 @@ crypto test:
 
 legacy emu test:
   stage: test
-  when: manual
   <<: *only_changes_legacy
-
   dependencies:
     - legacy emu regular build
   variables:
@@ -136,9 +124,7 @@ legacy emu test:
 
 legacy emu btconly test:
   stage: test
-  when: manual
   <<: *only_changes_legacy
-
   dependencies:
     - legacy emu btconly build
   variables:
@@ -165,13 +151,11 @@ legacy emu upgrade test:
 
 python test:
   stage: test
-  when: manual
   only:
     changes:
       - ci/**/*
       - common/**/*
       - python/**/*
-
   script:
     - cd python
     - pipenv run tox
@@ -181,15 +165,12 @@ python test:
 
 storage test:
   stage: test
-  when: manual
   only:
     changes:
       - ci/**/*
       - storage/**/*
-
   dependencies: []
   script:
     - cd storage/tests
     - pipenv run make build
     - pipenv run make tests_all
-
