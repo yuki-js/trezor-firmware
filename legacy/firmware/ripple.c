@@ -310,6 +310,7 @@ bool confirmRippleSignerListSet(const HDNode *node, const RippleSignTx *msg, Rip
     fsm_sendFailure(FailureType_Failure_ProcessError, _("An error occured during creating signed transaction."));
     return false;
   }
+  return true;
 }
 
 int createRippleSignedTx(const HDNode *node, TransactionField_t *tf, size_t nField, RippleSignedTx *resp){

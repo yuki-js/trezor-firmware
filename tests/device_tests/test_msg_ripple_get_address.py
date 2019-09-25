@@ -41,6 +41,7 @@ class TestMsgRippleGetAddress:
     def test_ripple_get_address_other(self, client):
         # data from https://github.com/you21979/node-ripple-bip32/blob/master/test/test.js
         address = get_address(client, parse_path("m/44'/144'/0'/0/0"))
-        assert address == "r4ocGE47gm4G4LkA9mriVHQqzpMLBTgnTY"
+        assert address == "r4ocGE47gm4G4LkA9mriVHQqzpM
+LBTgnTY"
         address = get_address(client, parse_path("m/44'/144'/0'/0/1"))
         assert address == "rUt9ULSrUvfCmke8HTFU1szbmFpWzVbBXW"
