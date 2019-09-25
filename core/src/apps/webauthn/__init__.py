@@ -205,7 +205,7 @@ _ALLOW_FIDO2 = True
 _ALLOW_RESIDENT_CREDENTIALS = True
 
 # The attestation type to use in MakeCredential responses. If false, then self attestation will be used.
-_USE_BASIC_ATTESTATION = True
+_USE_BASIC_ATTESTATION = False
 
 
 def frame_init() -> dict:
@@ -599,7 +599,7 @@ class U2fConfirmRegister(U2fState):
             text.normal(
                 "Another U2F device", "was used to register", "in this application."
             )
-            return await confirm(text, confirm=None)
+            return await confirm(text, confirm=None, cancel="Close")
         else:
             content = ConfirmContent(self)
             return await confirm(content)
@@ -724,7 +724,7 @@ class Fido2ConfirmExcluded(Fido2ConfirmMakeCredential):
 
         text = Text("FIDO2 Register", ui.ICON_WRONG, ui.RED)
         text.normal("This device is already", "registered with", self._cred.rp_id + ".")
-        await confirm(text, confirm=None)
+        await confirm(text, confirm=None, cancel="Close")
 
 
 class Fido2ConfirmGetAssertion(Fido2State, ConfirmInfo, Pageable):
@@ -797,7 +797,7 @@ class Fido2ConfirmNoPin(State):
     async def confirm_dialog(self) -> bool:
         text = Text("FIDO2 Verify User", ui.ICON_WRONG, ui.RED)
         text.normal("Unable to verify user.", "Please enable PIN", "protection.")
-        return await confirm(text, confirm=None)
+        return await confirm(text, confirm=None, cancel="Close")
 
 
 class Fido2ConfirmNoCredentials(Fido2ConfirmGetAssertion):
@@ -814,7 +814,7 @@ class Fido2ConfirmNoCredentials(Fido2ConfirmGetAssertion):
         text.normal(
             "This device is not", "registered with", self._creds[0].app_name() + "."
         )
-        await confirm(text, confirm=None)
+        await confirm(text, confirm=None, cancel="Close")
 
 
 class Fido2ConfirmReset(Fido2State):

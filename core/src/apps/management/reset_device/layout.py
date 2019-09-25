@@ -149,40 +149,38 @@ def _split_share_into_pages(share_words):
 
 
 async def _confirm_share_words(ctx, share_index, share_words, group_index=None):
-    numbered = list(enumerate(share_words))
-
     # divide list into thirds, rounding up, so that chunking by `third` always yields
     # three parts (the last one might be shorter)
-    third = (len(numbered) + 2) // 3
+    third = (len(share_words) + 2) // 3
 
-    for part in utils.chunks(numbered, third):
-        if not await _confirm_word(
-            ctx, share_index, part, len(share_words), group_index
-        ):
+    offset = 0
+    count = len(share_words)
+    for part in utils.chunks(share_words, third):
+        if not await _confirm_word(ctx, share_index, part, offset, count, group_index):
             return False
+        offset += len(part)
 
     return True
 
 
-async def _confirm_word(
-    ctx, share_index, numbered_share_words, count, group_index=None
-):
+async def _confirm_word(ctx, share_index, share_words, offset, count, group_index=None):
+    # remove duplicates
+    non_duplicates = list(set(share_words))
+    # shuffle list
+    random.shuffle(non_duplicates)
+    # take top NUM_OF_CHOICES words
+    choices = non_duplicates[: MnemonicWordSelect.NUM_OF_CHOICES]
+    # select first of them
+    checked_word = choices[0]
+    # find its index
+    checked_index = share_words.index(checked_word) + offset
+    # shuffle again so the confirmed word is not always the first choice
+    random.shuffle(choices)
 
-    # TODO: duplicated words in the choice list
-    # shuffle the numbered seed half, slice off the choices we need
-    random.shuffle(numbered_share_words)
-    numbered_choices = numbered_share_words[: MnemonicWordSelect.NUM_OF_CHOICES]
-
-    # we always confirm the first (random) word index
-    checked_index, checked_word = numbered_choices[0]
     if __debug__:
         debug.reset_word_index.publish(checked_index)
 
-    # shuffle again so the confirmed word is not always the first choice
-    random.shuffle(numbered_choices)
-
     # let the user pick a word
-    choices = [word for _, word in numbered_choices]
     select = MnemonicWordSelect(choices, share_index, checked_index, count, group_index)
     if __debug__:
         selected_word = await ctx.wait(select, debug.input_signal())
@@ -334,24 +332,27 @@ async def slip39_prompt_threshold(ctx, num_of_shares, group_id=None):
         if confirmed:
             break
 
+        text = "The threshold sets the number of shares "
         if group_id is None:
-            info = InfoConfirm(
-                "The threshold sets the "
-                "number of shares "
-                "needed to recover your "
-                "wallet. Set it to %s and "
-                "you will need any %s "
-                "of your %s shares." % (count, count, num_of_shares)
-            )
+            text += "needed to recover your wallet. "
+            text += "Set it to %s and you will need " % count
+            if num_of_shares == 1:
+                text += "1 share."
+            elif num_of_shares == count:
+                text += "all %s of your %s shares." % (count, num_of_shares)
+            else:
+                text += "any %s of your %s shares." % (count, num_of_shares)
         else:
-            info = InfoConfirm(
-                "The threshold sets the "
-                "number of shares "
-                "needed to form a group. "
-                "Set it to %s and you will "
-                "need any %s of %s shares "
-                "to form Group %s." % (count, count, num_of_shares, group_id + 1)
-            )
+            text += "needed to form a group. "
+            text += "Set it to %s and you will " % count
+            if num_of_shares == 1:
+                text += "need 1 share "
+            elif num_of_shares == count:
+                text += "need all %s of %s shares " % (count, num_of_shares)
+            else:
+                text += "need any %s of %s shares " % (count, num_of_shares)
+            text += "to form Group %s." % (group_id + 1)
+        info = InfoConfirm(text)
         await info
 
     return count
@@ -359,10 +360,7 @@ async def slip39_prompt_threshold(ctx, num_of_shares, group_id=None):
 
 async def slip39_prompt_number_of_shares(ctx, group_id=None):
     count = 5
-    if group_id is not None:
-        min_count = 1
-    else:
-        min_count = 2
+    min_count = 1
     max_count = 16
 
     while True:
@@ -509,7 +507,7 @@ async def slip39_advanced_show_and_confirm_shares(ctx, shares):
                     await _show_confirmation_success(
                         ctx,
                         share_index=share_index,
-                        num_of_shares=len(shares),
+                        num_of_shares=len(group),
                         group_index=group_index,
                     )
                     break  # this share is confirmed, go to next one
@@ -553,19 +551,30 @@ class Slip39NumInput(ui.Component):
             # render the counter
             if self.step is Slip39NumInput.SET_SHARES:
                 if self.group_id is None:
-                    first_line_text = "%s people or locations" % count
-                    second_line_text = "will each hold one share."
+                    if count == 1:
+                        first_line_text = "Only one share will"
+                        second_line_text = "be created."
+                    else:
+                        first_line_text = "%s people or locations" % count
+                        second_line_text = "will each hold one share."
                 else:
                     first_line_text = "Set the total number of"
                     second_line_text = "shares in Group %s." % (self.group_id + 1)
                 ui.display.text(
                     12, 130, first_line_text, ui.NORMAL, ui.FG, ui.BG, ui.WIDTH - 12
                 )
-                ui.display.text(12, 156, second_line_text, ui.NORMAL, ui.FG, ui.BG)
+                ui.display.text(
+                    12, 156, second_line_text, ui.NORMAL, ui.FG, ui.BG, ui.WIDTH - 12
+                )
             elif self.step is Slip39NumInput.SET_THRESHOLD:
                 if self.group_id is None:
                     first_line_text = "For recovery you need"
-                    second_line_text = "any %s of the shares." % count
+                    if count == 1:
+                        second_line_text = "1 share."
+                    elif count == self.input.max_count:
+                        second_line_text = "all %s of the shares." % count
+                    else:
+                        second_line_text = "any %s of the shares." % count
                 else:
                     first_line_text = "The required number of "
                     second_line_text = "shares to form Group %s." % (self.group_id + 1)

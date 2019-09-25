@@ -46,9 +46,17 @@ async def reset_device(ctx: wire.Context, msg: ResetDevice) -> Success:
     # For SLIP-39 this is the Encrypted Master Secret
     secret = _compute_secret_from_entropy(int_entropy, ext_entropy, msg.strength)
 
-    if msg.backup_type != BackupType.Bip39:
+    # Check backup type, perform type-specific handling
+    if msg.backup_type == BackupType.Bip39:
+        # in BIP-39 we store mnemonic string instead of the secret
+        secret = bip39.from_data(secret).encode()
+    elif msg.backup_type in (BackupType.Slip39_Basic, BackupType.Slip39_Advanced):
+        # generate and set SLIP39 parameters
         storage.device.set_slip39_identifier(slip39.generate_random_identifier())
         storage.device.set_slip39_iteration_exponent(slip39.DEFAULT_ITERATION_EXPONENT)
+    else:
+        # Unknown backup type.
+        raise RuntimeError
 
     # If either of skip_backup or no_backup is specified, we are not doing backup now.
     # Otherwise, we try to do it.
@@ -70,16 +78,6 @@ async def reset_device(ctx: wire.Context, msg: ResetDevice) -> Success:
     storage.device.load_settings(
         label=msg.label, use_passphrase=msg.passphrase_protection
     )
-    if msg.backup_type == BackupType.Bip39:
-        # in BIP-39 we store mnemonic string instead of the secret
-        secret = bip39.from_data(secret).encode()
-    elif msg.backup_type not in (BackupType.Slip39_Basic, BackupType.Slip39_Advanced):
-        # Unknown backup type.
-        # This check might seem superfluous, because we are checking
-        # in `_validate_reset_device` already, however, this is critical part,
-        # so just to make sure.
-        raise RuntimeError
-
     storage.device.store_mnemonic_secret(
         secret,  # for SLIP-39, this is the EMS
         msg.backup_type,
@@ -153,11 +151,6 @@ async def backup_slip39_advanced(
     await layout.slip39_advanced_show_and_confirm_shares(ctx, mnemonics)
 
 
-async def backup_bip39(ctx: wire.Context, secret: bytes) -> None:
-    mnemonic = bip39.from_data(secret)
-    await layout.bip39_show_and_confirm_mnemonic(ctx, mnemonic)
-
-
 def _validate_reset_device(msg: ResetDevice) -> None:
     msg.backup_type = msg.backup_type or _DEFAULT_BACKUP_TYPE
     if msg.backup_type not in (
@@ -200,4 +193,4 @@ async def backup_seed(
     elif backup_type == BackupType.Slip39_Advanced:
         await backup_slip39_advanced(ctx, mnemonic_secret)
     else:
-        await backup_bip39(ctx, mnemonic_secret)
+        await layout.bip39_show_and_confirm_mnemonic(ctx, mnemonic_secret.decode())
