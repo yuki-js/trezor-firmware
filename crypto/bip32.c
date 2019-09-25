@@ -758,13 +758,13 @@ int hdnode_nem_decrypt(const HDNode *node, const ed25519_public_key public_key,
 #endif
 
 #if USE_RIPPLE
-int hdnode_get_ripple_address(const HDNode *node, char *address){
+int hdnode_get_ripple_address(const HDNode *node, char *address) {
   if (node->curve != &secp256k1_info) {
     return 0;
   }
   return ripple_get_address(node->public_key, address, 40);
 }
-int hdnode_get_ripple_address_raw(const HDNode *node, uint8_t *raw){
+int hdnode_get_ripple_address_raw(const HDNode *node, uint8_t *raw) {
   ripple_get_address_raw(node->public_key, raw);
   return 0;
 }

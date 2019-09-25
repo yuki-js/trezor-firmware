@@ -46,7 +46,7 @@ def address_from_public_key(pubkey: bytes) -> str:
 
 def account_id_from_public_key(pubkey: bytes) -> str:
     """Extracts AccountID from public key
-    
+
     Ripple AccountID is ripemd160(sha256(pubkey))
 
     see https://developers.ripple.com/accounts.html#address-encoding

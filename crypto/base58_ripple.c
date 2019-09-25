@@ -30,10 +30,15 @@
 #include "sha2.h"
 
 const char b58rdigits_ordered[] =
-  "rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz";
+    "rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz";
 const int8_t b58rdigits_map[] = {
-                                 -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,50,33,7,21,41,40,27,45,8,-1,-1,-1,-1,-1,-1,-1,54,10,38,12,14,47,15,16,-1,17,18,19,20,13,-1,22,23,24,25,26,11,28,29,30,31,32,-1,-1,-1,-1,-1,-1,5,34,35,36,37,6,39,3,49,42,43,-1,44,4,46,1,48,0,2,51,52,53,9,55,56,57,-1,-1,-1,-1,-1
-};
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 50, 33, 7,  21, 41, 40, 27, 45,
+    8,  -1, -1, -1, -1, -1, -1, -1, 54, 10, 38, 12, 14, 47, 15, 16, -1, 17, 18,
+    19, 20, 13, -1, 22, 23, 24, 25, 26, 11, 28, 29, 30, 31, 32, -1, -1, -1, -1,
+    -1, -1, 5,  34, 35, 36, 37, 6,  39, 3,  49, 42, 43, -1, 44, 4,  46, 1,  48,
+    0,  2,  51, 52, 53, 9,  55, 56, 57, -1, -1, -1, -1, -1};
 
 bool b58rtobin(void *bin, size_t *binszp, const char *b58) {
   size_t binsz = *binszp;
@@ -178,7 +183,7 @@ bool b58renc(char *b58, size_t *b58sz, const void *data, size_t binsz) {
 }
 
 int base58r_encode_check(const uint8_t *data, int datalen,
-                        HasherType hasher_type, char *str, int strsize) {
+                         HasherType hasher_type, char *str, int strsize) {
   if (datalen > 128) {
     return 0;
   }
@@ -193,7 +198,7 @@ int base58r_encode_check(const uint8_t *data, int datalen,
 }
 
 int base58r_decode_check(const char *str, HasherType hasher_type, uint8_t *data,
-                        int datalen) {
+                         int datalen) {
   if (datalen > 128) {
     return 0;
   }
@@ -209,4 +214,3 @@ int base58r_decode_check(const char *str, HasherType hasher_type, uint8_t *data,
   memcpy(data, nd, res - 4);
   return res - 4;
 }
-

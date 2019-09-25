@@ -27,8 +27,8 @@
 #include "messages-lisk.pb.h"
 #include "messages-management.pb.h"
 #include "messages-nem.pb.h"
-#include "messages-stellar.pb.h"
 #include "messages-ripple.pb.h"
+#include "messages-stellar.pb.h"
 
 // message functions
 

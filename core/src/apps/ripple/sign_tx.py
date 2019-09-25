@@ -5,11 +5,10 @@ from trezor.messages.RippleSignedTx import RippleSignedTx
 from trezor.messages.RippleSignTx import RippleSignTx
 from trezor.wire import ProcessError
 
+import apps.ripple.transaction_fields as tx_field
 from apps.common import paths
 from apps.ripple import CURVE, helpers, layout
 from apps.ripple.serialize import serialize
-
-import apps.ripple.transaction_fields as tx_field
 
 
 async def sign_tx(ctx, msg: RippleSignTx, keychain):
@@ -17,12 +16,14 @@ async def sign_tx(ctx, msg: RippleSignTx, keychain):
 
     multisig = bool(msg.multisig and msg.account)
 
-    await paths.validate_path(ctx, helpers.validate_full_path, keychain,
-                              msg.address_n, CURVE)
+    await paths.validate_path(
+        ctx, helpers.validate_full_path, keychain, msg.address_n, CURVE
+    )
 
     node = keychain.derive(msg.address_n)
-    source_address = msg.account if multisig else helpers.address_from_public_key(
-        node.public_key())
+    source_address = (
+        msg.account if multisig else helpers.address_from_public_key(node.public_key())
+    )
 
     if multisig:
         await layout.require_confirm_multisig(ctx, msg.account)
@@ -34,14 +35,16 @@ async def sign_tx(ctx, msg: RippleSignTx, keychain):
     if msg.payment:
         if msg.payment.destination_tag is not None:
             await layout.require_confirm_destination_tag(
-                ctx, msg.payment.destination_tag)
-        await layout.require_confirm_tx(ctx, msg.payment.destination,
-                                        msg.payment.amount)
+                ctx, msg.payment.destination_tag
+            )
+        await layout.require_confirm_tx(
+            ctx, msg.payment.destination, msg.payment.amount
+        )
         fields = tx_field.payment(msg)
     elif msg.signer_list_set:
         await layout.require_confirm_signer_list_set(
-            ctx, msg.signer_list_set.signer_quorum,
-            msg.signer_list_set.signer_entries)
+            ctx, msg.signer_list_set.signer_quorum, msg.signer_list_set.signer_entries
+        )
         fields = tx_field.signer_list_set(msg)
     elif msg.account_set:
         await layout.require_confirm_account_set(ctx, msg.account_set)
@@ -50,23 +53,21 @@ async def sign_tx(ctx, msg: RippleSignTx, keychain):
         raise ValueError("The message is not supported.")
 
     set_canonical_flag(msg)
-    tx = serialize(msg,
-                   fields,
-                   multisig,
-                   source_address,
-                   pubkey=node.public_key())
+    tx = serialize(msg, fields, multisig, source_address, pubkey=node.public_key())
     to_sign = get_network_prefix(multisig) + tx
 
     if multisig:
         to_sign += helpers.account_id_from_public_key(node.public_key())
 
     signature = ecdsa_sign(node.private_key(), first_half_of_sha512(to_sign))
-    tx = serialize(msg,
-                   fields,
-                   multisig,
-                   source_address,
-                   pubkey=node.public_key(),
-                   signature=signature)
+    tx = serialize(
+        msg,
+        fields,
+        multisig,
+        source_address,
+        pubkey=node.public_key(),
+        signature=signature,
+    )
     return RippleSignedTx(signature, tx)
 
 
@@ -110,8 +111,8 @@ def set_canonical_flag(msg: RippleSignTx):
 
 def validate(msg: RippleSignTx):
     if None in (msg.fee, msg.sequence) or (
-            msg.payment
-            and None in (msg.payment.amount, msg.payment.destination)):
+        msg.payment and None in (msg.payment.amount, msg.payment.destination)
+    ):
         raise ProcessError(
             "Some of the required fields are missing (fee, sequence, payment.amount, payment.destination)"
         )

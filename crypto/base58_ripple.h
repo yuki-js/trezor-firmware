@@ -33,14 +33,14 @@ extern const char b58rdigits_ordered[];
 extern const int8_t b58rdigits_map[];
 
 int base58r_encode_check(const uint8_t *data, int len, HasherType hasher_type,
-                        char *str, int strsize);
+                         char *str, int strsize);
 int base58r_decode_check(const char *str, HasherType hasher_type, uint8_t *data,
-                        int datalen);
+                         int datalen);
 
 // Private
 bool b58rtobin(void *bin, size_t *binszp, const char *b58);
 int b58rcheck(const void *bin, size_t binsz, HasherType hasher_type,
-             const char *base58str);
+              const char *base58str);
 bool b58renc(char *b58, size_t *b58sz, const void *data, size_t binsz);
 
 #endif

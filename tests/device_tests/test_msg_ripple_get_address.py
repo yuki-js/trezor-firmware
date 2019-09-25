@@ -22,7 +22,8 @@ from trezorlib.tools import parse_path
 CUSTOM_MNEMONIC = (
     "armed bundle pudding lazy strategy impulse where identify "
     "submit weekend physical antenna flight social acoustic absurd "
-    "whip snack decide blur unfold fiction pumpkin athlete")
+    "whip snack decide blur unfold fiction pumpkin athlete"
+)
 
 
 @pytest.mark.altcoin

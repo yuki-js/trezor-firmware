@@ -1,8 +1,8 @@
 from trezor import ui
 from trezor.messages import ButtonRequestType
+from trezor.ui.scroll import Paginated
 from trezor.ui.text import Text
 from trezor.utils import format_amount
-from trezor.ui.scroll import Paginated
 
 from . import helpers
 
@@ -50,8 +50,7 @@ async def require_confirm_signer_list_set(ctx, quorum, signerEntries):
         text.normal("Weight: %d" % entry.signer_weight)
         pages.append(text)
     paginated = Paginated(pages)
-    await require_hold_to_confirm(ctx, paginated,
-                                  ButtonRequestType.ConfirmOutput)
+    await require_hold_to_confirm(ctx, paginated, ButtonRequestType.ConfirmOutput)
 
 
 async def require_confirm_account_set(ctx, account_set):
@@ -77,5 +76,4 @@ async def require_confirm_account_set(ctx, account_set):
         text.bold(account_set.tick_size)
         pages.append(text)
     paginated = Paginated(pages)
-    await require_hold_to_confirm(ctx, paginated,
-                                  ButtonRequestType.ConfirmOutput)
+    await require_hold_to_confirm(ctx, paginated, ButtonRequestType.ConfirmOutput)

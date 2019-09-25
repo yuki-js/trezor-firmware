@@ -24,8 +24,8 @@
 
 #ifndef __RIPPLE_H__
 #define __RIPPLE_H__
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 void ripple_get_address_raw(const uint8_t *public_key, uint8_t *address);
 bool ripple_get_address(const uint8_t *public_key, char *address, int addrsize);
