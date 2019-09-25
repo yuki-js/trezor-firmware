@@ -292,7 +292,8 @@ bool confirmRippleSignerListSet(const HDNode *node, const RippleSignTx *msg, Rip
   hdnode_get_ripple_address_raw(node, sourceAccount);
 
   
-  TransactionField_t tf_payment[]={
+  
+  TransactionField_t tf_signerlistset[]={
                                    {TransactionField_Flags, UL2B(flags),4},
                                    {TransactionField_TransactionType, US2B(TransactionType_SignerListSet),2},
                                    {TransactionField_Sequence, UL2B(msg->sequence),4},
@@ -302,16 +303,18 @@ bool confirmRippleSignerListSet(const HDNode *node, const RippleSignTx *msg, Rip
                                    {TransactionField_TxnSignature, NULL, 0},
                                    {TransactionField_SigningPubKey, node->public_key, 33},
                                    {TransactionField_SignerQuorum, UL2B(msg->signer_list_set.signer_quorum),4},
-                                   {TransactionField_SignerEntries, NULL, NULL}
+                                   {TransactionField_SignerEntries, NULL, 0}
   };
+  size_t tf_signerlistset_length = sizeof(tf_signerlistset) / sizeof(tf_signerlistset[0]);
+  if(createRippleSignedTx(node, tf_signerlistset, tf_signerlistset_length, resp) < 0){
+    fsm_sendFailure(FailureType_Failure_ProcessError, _("An error occured during creating signed transaction."));
+    return false;
+  }
 }
 
 int createRippleSignedTx(const HDNode *node, TransactionField_t *tf, size_t nField, RippleSignedTx *resp){
-  uint8_t tx_unsigned[1024] = {0};
-  tx_unsigned[0]=0x53;
-  tx_unsigned[1]=0x54;
-  tx_unsigned[2]=0x58;
-  tx_unsigned[3]=0x00;
+  uint8_t tx_unsigned[1024] = {0x53, 0x54, 0x58, 0x00};
+
   int serializedSize = serializeRippleTx(tf, nField, false, tx_unsigned + 4, 1024 - 4);
   if(serializedSize<=0){
     return -1;
@@ -476,7 +479,7 @@ void layoutRipplePayment(const char *recipient_addr, const uint64_t drops, const
 }
 
 void layoutRippleSignerListSet(){
-  layoutDialogSwipe(&bmp_icon_questionm, _("Cancel"), _("Confirm"), NULL,
+  layoutDialogSwipe(&bmp_icon_question, _("Cancel"), _("Confirm"), NULL,
                     _("Confirm setting signers?"), NULL, NULL, NULL, NULL, NULL);
 }
 void layoutConfirmRippleFee(const uint64_t fee){
