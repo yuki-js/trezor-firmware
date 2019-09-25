@@ -210,7 +210,7 @@ static uint32_t setFlags(const RippleSignTx *msg) {
 }
 
 static bool checkFee(const uint64_t fee) {
-  return (fee < MIN_FEE || fee > MAX_FEE)
+  return (fee > MIN_FEE && fee < MAX_FEE);
 }
 bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg,
                           RippleSignedTx *resp) {
