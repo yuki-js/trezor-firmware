@@ -22,13 +22,11 @@ from trezorlib.tools import parse_path
 CUSTOM_MNEMONIC = (
     "armed bundle pudding lazy strategy impulse where identify "
     "submit weekend physical antenna flight social acoustic absurd "
-    "whip snack decide blur unfold fiction pumpkin athlete"
-)
+    "whip snack decide blur unfold fiction pumpkin athlete")
 
 
 @pytest.mark.altcoin
 @pytest.mark.ripple
-@pytest.mark.skip_t1  # T1 support is not planned
 class TestMsgRippleGetAddress:
     def test_ripple_get_address(self, client):
         # data from https://iancoleman.io/bip39/#english
