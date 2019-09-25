@@ -2,6 +2,9 @@ from common import *
 
 if not utils.BITCOIN_ONLY:
     from trezor.messages.RipplePayment import RipplePayment
+    from trezor.messages.RippleSignerListSet import RippleSignerListSet
+    from trezor.messages.RippleSignerEntry import RippleSignerEntry
+    from trezor.messages.RippleAccountSet import RippleAccountSet
     from trezor.messages.RippleSignTx import RippleSignTx
     from apps.ripple.serialize import serialize, serialize_amount
     from apps.ripple.sign_tx import get_network_prefix
@@ -56,7 +59,10 @@ class TestRippleSerializer(unittest.TestCase):
         payment = RipplePayment(25000000, "r4BPgS7DHebQiU31xWELvZawwSG2fSPJ7C")
         common = RippleSignTx(fee=10, flags=0, sequence=2, payment=payment)
         self.assertEqual(
-            serialize(common, source_address),
+            serialize(msg=common,
+                      source_address=source_address,
+                      multisig=False,
+                      fields=tx_field.payment(common)),
             unhexlify(
                 "120000220000000024000000026140000000017d784068400000000000000a81145ccb151f6e9d603f394ae778acf10d3bece874f68314e851bbbe79e328e43d68f43445368133df5fba5a"
             ))
@@ -87,6 +93,43 @@ class TestRippleSerializer(unittest.TestCase):
                       fields=tx_field.payment(common)),
             unhexlify(
                 "120000220000000024000000012ef72d50ca6140000000017d784068400000000000000c8114e851bbbe79e328e43d68f43445368133df5fba5a831476dac5e814cd4aa74142c3ab45e69a900e637aa2"
+            ))
+
+        # original
+        source_address = "rNaqKtKrMSwpwZSzRckPf7S96DkimjkF4H"
+        signer_entries = [
+            RippleSignerEntry("rh5ZnEVySAy7oGd3nebT3wrohGDrsNS83E", 1),
+            RippleSignerEntry("rNaj2u1NQWwy6WLy294wZs1jhuz1Q8PNof", 1)
+        ]
+        signer_list_set = RippleSignerListSet(signer_quorum=1,
+                                              signer_entries=signer_entries)
+        common = RippleSignTx(fee=12,
+                              flags=2147483648,
+                              sequence=1,
+                              signer_list_set=signer_list_set)
+        self.assertEqual(
+            serialize(msg=common,
+                      source_address=source_address,
+                      multisig=False,
+                      fields=tx_field.signer_list_set(common)),
+            unhexlify(
+                "12000c2280000000240000000120230000000168400000000000000c81148fb40e1ffa5d557ce9851a535af94965e0dd0988f4eb130001811428c4348871a02d480ffdf2f192110185db13cfd9e1eb13000181148faf434d5f7d95d4904ea2f07dce37f370574ab7e1f1"
+            ))
+
+        # DisableMaster flag
+        source_address = "rNaqKtKrMSwpwZSzRckPf7S96DkimjkF4H"
+        account_set = RippleAccountSet(set_flag=4)
+        common = RippleSignTx(fee=12,
+                              flags=2147483648,
+                              sequence=6,
+                              account_set=account_set)
+        self.assertEqual(
+            serialize(msg=common,
+                      source_address=source_address,
+                      multisig=False,
+                      fields=tx_field.signer_list_set(common)),
+            unhexlify(
+                "1200032280000000240000000620210000000468400000000000000c81148fb40e1ffa5d557ce9851a535af94965e0dd0988"
             ))
 
     def test_transactions_for_signing(self):
