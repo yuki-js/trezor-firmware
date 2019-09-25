@@ -4,7 +4,7 @@ RippleSignTx.address_n                     max_count:8
 RippleSignTx.account_txn_id                max_size:65
 RippleSignTx.memos                         max_count:8
 RippleSignTx.signers                       max_count:8
-RippleSignTx.account                       max_count:130
+RippleSignTx.account                       max_size:130
 RippleAccountSet.domain                    max_size:256
 RippleAccountSet.email_hash                max_size:33
 RippleAccountSet.message_key               max_size:128
