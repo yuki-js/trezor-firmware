@@ -209,6 +209,9 @@ static uint32_t setFlags(const RippleSignTx *msg){
   return flags;
 }
 
+static bool checkFee(const uint64_t fee){
+  return (fee<MIN_FEE || fee > MAX_FEE)
+}
 bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSignedTx *resp){
   layoutRipplePayment(msg->payment.destination, msg->payment.amount, msg->payment.destination_tag);
   if (!protectButton(ButtonRequestType_ButtonRequest_SignTx, false)) {
@@ -233,6 +236,10 @@ bool confirmRipplePayment(const HDNode *node, const RippleSignTx *msg, RippleSig
     encodeAmount(msg->payment.amount, amountBuf);
   }
 
+  if(!checkFee(msg->fee)){
+    fsm_sendFailure(FailureType_Failure_ProcessError, "Fee must be in the range of 10 to 10,000 drops");
+    return false;
+  }
   uint8_t feeBuf[8];
   encodeAmount(msg->fee, feeBuf);
   
@@ -314,8 +321,11 @@ bool confirmRippleSignerListSet(const HDNode *node, const RippleSignTx *msg, Rip
 }
 
 int createRippleSignedTx(const HDNode *node, TransactionField_t *tf, size_t nField, RippleSignedTx *resp){
-  uint8_t tx_unsigned[1024] = {0x53, 0x54, 0x58, 0x00};
-
+  uint8_t tx_unsigned[1024] = {0};
+  tx_unsigned[0]=0x53;
+  tx_unsigned[1]=0x54;
+  tx_unsigned[2]=0x58;
+  tx_unsigned[3]=0x00;
   int serializedSize = serializeRippleTx(tf, nField, false, tx_unsigned + 4, 1024 - 4);
   if(serializedSize<=0){
     return -1;
