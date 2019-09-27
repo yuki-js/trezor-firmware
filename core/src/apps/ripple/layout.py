@@ -50,7 +50,8 @@ async def require_confirm_signer_list_set(ctx, quorum, signerEntries):
         text.normal("Weight: %d" % entry.signer_weight)
         pages.append(text)
     paginated = Paginated(pages)
-    await require_hold_to_confirm(ctx, paginated, ButtonRequestType.ConfirmOutput)
+    await require_hold_to_confirm(ctx, paginated,
+                                  ButtonRequestType.ConfirmOutput)
 
 
 async def require_confirm_account_set(ctx, account_set):
@@ -58,22 +59,33 @@ async def require_confirm_account_set(ctx, account_set):
     if account_set.set_flag:
         text = Text("Confirm AccountSet")
         text.normal("SetFlag: ")
-        text.bold(account_set.set_flag)
+        text.bold(str(account_set.set_flag))
         pages.append(text)
     if account_set.clear_flag:
         text = Text("Confirm AccountSet")
         text.normal("ClearFlag: ")
-        text.bold(account_set.clear_flag)
+        text.bold(str(account_set.clear_flag))
         pages.append(text)
     if account_set.transfer_rate:
         text = Text("Confirm AccountSet")
         text.normal("TransferRate: ")
-        text.bold(account_set.transfer_rate)
+        text.bold(str(account_set.transfer_rate))
         pages.append(text)
     if account_set.tick_size:
         text = Text("Confirm AccountSet")
         text.normal("TickSize: ")
-        text.bold(account_set.tick_size)
+        text.bold(str(account_set.tick_size))
+        pages.append(text)
+    if account_set.domain:
+        text = Text("Confirm AccountSet")
+        text.normal("Domain: ")
+        text.bold(str(account_set.domain))
+        pages.append(text)
+    if account_set.email_hash:
+        text = Text("Confirm AccountSet")
+        text.normal("Email Hash: ")
+        text.bold(str(account_set.email_hash))
         pages.append(text)
     paginated = Paginated(pages)
-    await require_hold_to_confirm(ctx, paginated, ButtonRequestType.ConfirmOutput)
+    await require_hold_to_confirm(ctx, paginated,
+                                  ButtonRequestType.ConfirmOutput)
