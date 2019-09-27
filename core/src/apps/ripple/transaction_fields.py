@@ -9,6 +9,7 @@ def payment(msg):
         "DestinationTag": msg.payment.destination_tag,
         "LastLedgerSequence": msg.last_ledger_sequence,
         "Destination": msg.payment.destination,
+        "InvoiceID": msg.payment.invoice_id
     }
     if msg.payment.amount:
         field["Amount"] = msg.payment.amount
@@ -17,6 +18,17 @@ def payment(msg):
             "currency": msg.issued_amount.currency,
             "value": msg.issued_amount.value,
             "issuer": msg.issued_amount.issuer
+        }
+    else:
+        return
+
+    if msg.payment.deliver_min:
+        field["Deliver_Min"] = msg.payment.deliver_min
+    elif msg.payment.issued_deliver_min:
+        field["Deliver_Min"] = {
+            "currency": msg.issued_deliver_min.currency,
+            "value": msg.issued_deliver_min.value,
+            "issuer": msg.issued_deliver_min.issuer
         }
     else:
         return
@@ -57,3 +69,13 @@ def account_set(msg):
         "EmailHash": msg.account_set.email_hash
     }
     return field
+
+
+def set_regular_key(msg):
+    if not msg.set_regular_key:
+        return
+
+    return {
+        "TransactionType": "SetRegularKey",
+        "RegularKey": msg.set_regular_key.regular_key
+    }
