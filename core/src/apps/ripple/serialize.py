@@ -25,8 +25,9 @@ def serialize(
     """Append common field and serialize transaction"""
     if "TransactionType" not in fields:
         raise ValueError("TransactionType is not present")
-    fields["TransactionType"] = binfield["TRANSACTION_TYPES"][
-        fields["TransactionType"]]
+    tType = fields["TransactionType"]
+    if type(tType) is str:
+        fields["TransactionType"] = binfield["TRANSACTION_TYPES"][tType]
     fields["Flags"] = msg.flags
     fields["Sequence"] = msg.sequence
     fields["Fee"] = msg.fee
