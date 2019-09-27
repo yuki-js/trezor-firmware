@@ -12,7 +12,6 @@ from trezor.messages.RippleSignTx import RippleSignTx
 
 from . import helpers
 from .binary_field import field as binfield
-from decimal import Decimal
 
 
 def serialize(
