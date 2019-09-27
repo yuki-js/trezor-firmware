@@ -169,7 +169,29 @@ def serialize_amount(value: int) -> bytearray:
 
 
 def serialize_issued_amount(amount: dict) -> bytearray:
+
     raise NotImplementedError("Issued currency is currently not supported")
+
+    value = Decimal(amount["value"]).normalize.as_tuple()
+    currency = amount["currency"][0:3]
+    issuer = helpers.decode_address(amount["issuer"])
+
+    digit = value.digit
+    exponent = value.exponent
+    mantissa = 0
+    for i in reversed(range(len(digit))):
+        mantissa += digit[i] * (10**i)
+
+    while mantissa < 10**15:
+        mantissa *= 10
+        exponent -= 1
+    while mantissa > 10**16 - 1:
+        mantissa //= 10
+        exponent -= 1
+
+    if exponent < -96 or 80 < exponent:
+        raise ValueError("Issued value is too big or small")
+    # wip
 
 
 def write_bytes(w: bytearray, value: bytes):
