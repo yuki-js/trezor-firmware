@@ -6,9 +6,10 @@ if not utils.BITCOIN_ONLY:
     from trezor.messages.RippleSignerEntry import RippleSignerEntry
     from trezor.messages.RippleAccountSet import RippleAccountSet
     from trezor.messages.RippleSignTx import RippleSignTx
-    from apps.ripple.serialize import serialize, serialize_amount
+    from apps.ripple.serialize import serialize, serialize_amount, serialize_raw
     from apps.ripple.sign_tx import get_network_prefix
     import apps.ripple.transaction_fields as tx_field
+    from apps.ripple.binary_field import field as binfield
 
 
 @unittest.skipUnless(not utils.BITCOIN_ONLY, "altcoin")
@@ -127,9 +128,26 @@ class TestRippleSerializer(unittest.TestCase):
             serialize(msg=common,
                       source_address=source_address,
                       multisig=False,
-                      fields=tx_field.signer_list_set(common)),
+                      fields=tx_field.account_set(common)),
             unhexlify(
                 "1200032280000000240000000620210000000468400000000000000c81148fb40e1ffa5d557ce9851a535af94965e0dd0988"
+            ))
+
+        tx_dict = {
+            "TransactionType": binfield["TRANSACTION_TYPES"]["Payment"],
+            "Flags": 0,
+            "Sequence": 32,
+            "LastLedgerSequence": 500000,
+            "Fee": 12,
+            "Account": "rNaqKtKrMSwpwZSzRckPf7S96DkimjkF4H",
+            "Amount": 22000000,
+            "Destination": "rJX2KwzaLJDyFhhtXKi3htaLfaUH2tptEX",
+            "DestinationTag": 810
+        }
+        self.assertEqual(
+            serialize_raw(fields=tx_dict, isSigning=False),
+            unhexlify(
+                "120000220000000024000000202E0000032A201B0007A1206140000000014FB18068400000000000000C81148FB40E1FFA5D557CE9851A535AF94965E0DD09888314C0426CFCB532E7523BD87B14E12C24C85121AAAA"
             ))
 
     def test_transactions_for_signing(self):

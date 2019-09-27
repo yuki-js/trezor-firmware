@@ -23,7 +23,7 @@ def serialize(
         signature=None,
 ) -> bytearray:
     """Append common field and serialize transaction"""
-    if "TranactionType" not in fields:
+    if "TransactionType" not in fields:
         raise ValueError("TransactionType is not present")
     fields["TransactionType"] = binfield["TRANSACTION_TYPES"][
         fields["TransactionType"]]
@@ -113,10 +113,10 @@ def write(w: bytearray, field: dict, value):
     elif field["type"] == binfield["TYPES"]["UInt32"]:
         w.extend(value.to_bytes(4, "big"))
     elif field["type"] == binfield["TYPES"]["Amount"]:
-        if type(value) is int:
-            w.extend(serialize_amount(value))
-        else:
+        if type(value) is dict:
             w.extend(serialize_issued_amount(value))
+        else:
+            w.extend(serialize_amount(value))  # it should be int
     elif field["type"] == binfield["TYPES"]["AccountID"]:
         write_bytes(w, helpers.decode_address(value))
     elif field["type"] == binfield["TYPES"]["Blob"]:

@@ -30,8 +30,6 @@ def payment(msg):
             "value": msg.issued_deliver_min.value,
             "issuer": msg.issued_deliver_min.issuer
         }
-    else:
-        return
     return field
 
 
