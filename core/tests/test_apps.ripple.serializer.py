@@ -167,7 +167,7 @@ class TestRippleSerializer(unittest.TestCase):
                 "ed5f5ac8b98974a3ca843326d9b88cebd0560177b973ee0b149f782cfaa06dc66a"
             ),
         )
-        tx = get_network_prefix() + tx
+        tx = get_network_prefix(multisig=False) + tx
 
         self.assertEqual(tx[0:4], unhexlify("53545800"))  # signing prefix
         self.assertEqual(tx[4:7], unhexlify("120000"))  # transaction type
