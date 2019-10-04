@@ -42,6 +42,6 @@ gen prebuild:
       - "**/*.json"
       - "**/*.proto"
       - "**/*.py"
-
+      - "**/*.pyi"
   script:
     - pipenv run make gen_check
