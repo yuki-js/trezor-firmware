@@ -1,6 +1,3 @@
-from apps.ripple.binary_field import field as binfield
-
-
 def payment(msg):
     if not msg.payment:
         return
