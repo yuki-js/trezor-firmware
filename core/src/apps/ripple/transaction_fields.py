@@ -1,6 +1,3 @@
-from apps.ripple.binary_field import field as binfield
-
-
 def payment(msg):
     if not msg.payment:
         return
@@ -9,6 +6,7 @@ def payment(msg):
         "DestinationTag": msg.payment.destination_tag,
         "LastLedgerSequence": msg.last_ledger_sequence,
         "Destination": msg.payment.destination,
+        "InvoiceID": msg.payment.invoice_id,
     }
     if msg.payment.amount:
         field["Amount"] = msg.payment.amount
@@ -16,10 +14,19 @@ def payment(msg):
         field["Amount"] = {
             "currency": msg.issued_amount.currency,
             "value": msg.issued_amount.value,
-            "issuer": msg.issued_amount.issuer
+            "issuer": msg.issued_amount.issuer,
         }
     else:
         return
+
+    if msg.payment.deliver_min:
+        field["Deliver_Min"] = msg.payment.deliver_min
+    elif msg.payment.issued_deliver_min:
+        field["Deliver_Min"] = {
+            "currency": msg.issued_deliver_min.currency,
+            "value": msg.issued_deliver_min.value,
+            "issuer": msg.issued_deliver_min.issuer,
+        }
     return field
 
 
@@ -33,12 +40,14 @@ def signer_list_set(msg):
     }
     entries = []
     for signerEntry in msg.signer_list_set.signer_entries:
-        entries.append({
-            "SignerEntry": {
-                "Account": signerEntry.account,
-                "SignerWeight": signerEntry.signer_weight,
+        entries.append(
+            {
+                "SignerEntry": {
+                    "Account": signerEntry.account,
+                    "SignerWeight": signerEntry.signer_weight,
+                }
             }
-        })
+        )
     field["SignerEntries"] = entries
     return field
 
@@ -54,6 +63,16 @@ def account_set(msg):
         "TransferRate": msg.account_set.transfer_rate,
         "TickSize": msg.account_set.tick_size,
         "Domain": msg.account_set.domain,
-        "EmailHash": msg.account_set.email_hash
+        "EmailHash": msg.account_set.email_hash,
     }
     return field
+
+
+def set_regular_key(msg):
+    if not msg.set_regular_key:
+        return
+
+    return {
+        "TransactionType": "SetRegularKey",
+        "RegularKey": msg.set_regular_key.regular_key,
+    }
