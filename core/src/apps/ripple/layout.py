@@ -50,8 +50,7 @@ async def require_confirm_signer_list_set(ctx, quorum, signerEntries):
         text.normal("Weight: %d" % entry.signer_weight)
         pages.append(text)
     paginated = Paginated(pages)
-    await require_hold_to_confirm(ctx, paginated,
-                                  ButtonRequestType.ConfirmOutput)
+    await require_hold_to_confirm(ctx, paginated, ButtonRequestType.ConfirmOutput)
 
 
 async def require_confirm_account_set(ctx, account_set):
@@ -87,5 +86,4 @@ async def require_confirm_account_set(ctx, account_set):
         text.bold(str(account_set.email_hash))
         pages.append(text)
     paginated = Paginated(pages)
-    await require_hold_to_confirm(ctx, paginated,
-                                  ButtonRequestType.ConfirmOutput)
+    await require_hold_to_confirm(ctx, paginated, ButtonRequestType.ConfirmOutput)

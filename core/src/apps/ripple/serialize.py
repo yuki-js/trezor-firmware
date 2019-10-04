@@ -15,12 +15,12 @@ from .binary_field import field as binfield
 
 
 def serialize(
-        msg: RippleSignTx,
-        fields: dict,
-        multisig: bool,
-        source_address,
-        pubkey=None,
-        signature=None,
+    msg: RippleSignTx,
+    fields: dict,
+    multisig: bool,
+    source_address,
+    pubkey=None,
+    signature=None,
 ) -> bytearray:
     """Append common field and serialize transaction"""
     if "TransactionType" not in fields:
@@ -38,29 +38,35 @@ def serialize(
     if msg.memos:
         memos = []
         for m in msg.memos:
-            memos.append({
-                "Memo": {
-                    "MemoType": m.memo_type,
-                    "MemoData": m.memo_data,
-                    "MemoFormat": m.memo_format
+            memos.append(
+                {
+                    "Memo": {
+                        "MemoType": m.memo_type,
+                        "MemoData": m.memo_data,
+                        "MemoFormat": m.memo_format,
+                    }
                 }
-            })
+            )
     if multisig:
-        signers = [{
-            "Signer": {
-                "Account": helpers.address_from_public_key(pubkey),
-                "TxnSignature": signature,
-                "SigningPubKey": pubkey,
-            }
-        }]
-        for signer in msg.signers:
-            signers.append({
+        signers = [
+            {
                 "Signer": {
-                    "Account": signer.account,
-                    "TxnSignature": signer.txn_signature,
-                    "SigningPubKey": signer.signing_pub_key,
+                    "Account": helpers.address_from_public_key(pubkey),
+                    "TxnSignature": signature,
+                    "SigningPubKey": pubkey,
                 }
-            })
+            }
+        ]
+        for signer in msg.signers:
+            signers.append(
+                {
+                    "Signer": {
+                        "Account": signer.account,
+                        "TxnSignature": signer.txn_signature,
+                        "SigningPubKey": signer.signing_pub_key,
+                    }
+                }
+            )
         fields["Signers"] = signers
         fields["SigningPubKey"] = b""
     else:
@@ -79,17 +85,22 @@ def serialize_raw(fields: dict, isSigning=True) -> bytearray:
     n = len(fields)
     for i in range(0, n):
         for j in range(n - 1, i, -1):
-            if (farr[j - 1] == "Invalid" or binfield["FIELDS"][farr[j]]["type"]
-                    < binfield["FIELDS"][farr[j - 1]]["type"] or
-                (binfield["FIELDS"][farr[j]]["type"] == binfield["FIELDS"][
-                    farr[j - 1]]["type"] and binfield["FIELDS"][farr[j]]["nth"]
-                 < binfield["FIELDS"][farr[j - 1]]["nth"])):
+            if (
+                farr[j - 1] == "Invalid"
+                or binfield["FIELDS"][farr[j]]["type"]
+                < binfield["FIELDS"][farr[j - 1]]["type"]
+                or (
+                    binfield["FIELDS"][farr[j]]["type"]
+                    == binfield["FIELDS"][farr[j - 1]]["type"]
+                    and binfield["FIELDS"][farr[j]]["nth"]
+                    < binfield["FIELDS"][farr[j - 1]]["nth"]
+                )
+            ):
                 farr[j - 1], farr[j] = farr[j], farr[j - 1]
 
     for k in farr:
         fInfo = binfield["FIELDS"][k]
-        if (not fInfo["isSerialized"]) or not (isSigning
-                                               or fInfo["isSigningField"]):
+        if (not fInfo["isSerialized"]) or not (isSigning or fInfo["isSigningField"]):
             continue
         write(w, fInfo, fields[k])
     return w
@@ -123,11 +134,13 @@ def write(w: bytearray, field: dict, value):
     elif field["type"] == binfield["TYPES"]["Blob"]:
         write_bytes(w, value)
     elif field["type"] == binfield["TYPES"]["STArray"]:
-        w.extend(serialize_array(value) +
-                 b"\xf1")  # STObject end with 0xf1(ArrayEndMarker)
+        w.extend(
+            serialize_array(value) + b"\xf1"
+        )  # STObject end with 0xf1(ArrayEndMarker)
     elif field["type"] == binfield["TYPES"]["STObject"]:
-        w.extend(serialize_raw(value) +
-                 b"\xe1")  # STObject end with 0xe1(ObjectEndMarker)
+        w.extend(
+            serialize_raw(value) + b"\xe1"
+        )  # STObject end with 0xe1(ObjectEndMarker)
     elif field["type"] == binfield["TYPES"]["Hash128"]:
         w.extend(bytes.fromhex(value)[0:16])
     elif field["type"] == binfield["TYPES"]["Hash160"]:
