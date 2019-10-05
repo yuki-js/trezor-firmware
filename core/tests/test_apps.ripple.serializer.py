@@ -134,7 +134,7 @@ class TestRippleSerializer(unittest.TestCase):
             ))
 
         tx_dict = {
-            "TransactionType": binfield["TRANSACTION_TYPES"]["Payment"],
+            "TransactionType": "Payment",
             "Flags": 0,
             "Sequence": 32,
             "LastLedgerSequence": 500000,
@@ -150,6 +150,19 @@ class TestRippleSerializer(unittest.TestCase):
                 "120000220000000024000000202E0000032A201B0007A1206140000000014FB18068400000000000000C81148FB40E1FFA5D557CE9851A535AF94965E0DD09888314C0426CFCB532E7523BD87B14E12C24C85121AAAA"
             ))
 
+        tx_dict = {
+            "Amount": {
+                "currency": "YJU",
+                "issuer": "rh5ZnEVySAy7oGd3nebT3wrohGDrsNS83E",
+                "value": "1145148101919"
+            }
+        }
+        self.assertEqual(
+            serialize_raw(fields=tx_dict, isSigning=False),
+            unhexlify(
+                "61D784118191D48118000000000000000000000000594A55000000000028C4348871A02D480FFDF2F192110185DB13CFD9"
+            ))
+        
     def test_transactions_for_signing(self):
         # https://github.com/ripple/ripple-binary-codec/blob/4581f1b41e712f545ba08be15e188a557c731ecf/test/signing-data-encoding-test.js
         source_address = "r9LqNeG6qHxjeUocjvVki2XR35weJ9mZgQ"

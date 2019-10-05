@@ -9,18 +9,19 @@
 # transaction type and the fields that are required for it.
 
 from trezor.messages.RippleSignTx import RippleSignTx
+from decimal import Decimal
 
 from . import helpers
 from .binary_field import field as binfield
 
 
 def serialize(
-    msg: RippleSignTx,
-    fields: dict,
-    multisig: bool,
-    source_address,
-    pubkey=None,
-    signature=None,
+        msg: RippleSignTx,
+        fields: dict,
+        multisig: bool,
+        source_address,
+        pubkey=None,
+        signature=None,
 ) -> bytearray:
     """Append common field and serialize transaction"""
     if "TransactionType" not in fields:
@@ -38,35 +39,29 @@ def serialize(
     if msg.memos:
         memos = []
         for m in msg.memos:
-            memos.append(
-                {
-                    "Memo": {
-                        "MemoType": m.memo_type,
-                        "MemoData": m.memo_data,
-                        "MemoFormat": m.memo_format,
-                    }
+            memos.append({
+                "Memo": {
+                    "MemoType": m.memo_type,
+                    "MemoData": m.memo_data,
+                    "MemoFormat": m.memo_format,
                 }
-            )
+            })
     if multisig:
-        signers = [
-            {
-                "Signer": {
-                    "Account": helpers.address_from_public_key(pubkey),
-                    "TxnSignature": signature,
-                    "SigningPubKey": pubkey,
-                }
+        signers = [{
+            "Signer": {
+                "Account": helpers.address_from_public_key(pubkey),
+                "TxnSignature": signature,
+                "SigningPubKey": pubkey,
             }
-        ]
+        }]
         for signer in msg.signers:
-            signers.append(
-                {
-                    "Signer": {
-                        "Account": signer.account,
-                        "TxnSignature": signer.txn_signature,
-                        "SigningPubKey": signer.signing_pub_key,
-                    }
+            signers.append({
+                "Signer": {
+                    "Account": signer.account,
+                    "TxnSignature": signer.txn_signature,
+                    "SigningPubKey": signer.signing_pub_key,
                 }
-            )
+            })
         fields["Signers"] = signers
         fields["SigningPubKey"] = b""
     else:
@@ -85,22 +80,17 @@ def serialize_raw(fields: dict, isSigning=True) -> bytearray:
     n = len(fields)
     for i in range(0, n):
         for j in range(n - 1, i, -1):
-            if (
-                farr[j - 1] == "Invalid"
-                or binfield["FIELDS"][farr[j]]["type"]
-                < binfield["FIELDS"][farr[j - 1]]["type"]
-                or (
-                    binfield["FIELDS"][farr[j]]["type"]
-                    == binfield["FIELDS"][farr[j - 1]]["type"]
-                    and binfield["FIELDS"][farr[j]]["nth"]
-                    < binfield["FIELDS"][farr[j - 1]]["nth"]
-                )
-            ):
+            if (farr[j - 1] == "Invalid" or binfield["FIELDS"][farr[j]]["type"]
+                    < binfield["FIELDS"][farr[j - 1]]["type"] or
+                (binfield["FIELDS"][farr[j]]["type"] == binfield["FIELDS"][
+                    farr[j - 1]]["type"] and binfield["FIELDS"][farr[j]]["nth"]
+                 < binfield["FIELDS"][farr[j - 1]]["nth"])):
                 farr[j - 1], farr[j] = farr[j], farr[j - 1]
 
     for k in farr:
         fInfo = binfield["FIELDS"][k]
-        if (not fInfo["isSerialized"]) or not (isSigning or fInfo["isSigningField"]):
+        if (not fInfo["isSerialized"]) or not (isSigning
+                                               or fInfo["isSigningField"]):
             continue
         write(w, fInfo, fields[k])
     return w
@@ -134,13 +124,11 @@ def write(w: bytearray, field: dict, value):
     elif field["type"] == binfield["TYPES"]["Blob"]:
         write_bytes(w, value)
     elif field["type"] == binfield["TYPES"]["STArray"]:
-        w.extend(
-            serialize_array(value) + b"\xf1"
-        )  # STObject end with 0xf1(ArrayEndMarker)
+        w.extend(serialize_array(value) +
+                 b"\xf1")  # STObject end with 0xf1(ArrayEndMarker)
     elif field["type"] == binfield["TYPES"]["STObject"]:
-        w.extend(
-            serialize_raw(value) + b"\xe1"
-        )  # STObject end with 0xe1(ObjectEndMarker)
+        w.extend(serialize_raw(value) +
+                 b"\xe1")  # STObject end with 0xe1(ObjectEndMarker)
     elif field["type"] == binfield["TYPES"]["Hash128"]:
         w.extend(bytes.fromhex(value)[0:16])
     elif field["type"] == binfield["TYPES"]["Hash160"]:
@@ -183,8 +171,6 @@ def serialize_amount(value: int) -> bytearray:
 
 def serialize_issued_amount(amount: dict) -> bytearray:
 
-    raise NotImplementedError("Issued currency is currently not supported")
-
     value = Decimal(amount["value"]).normalize.as_tuple()
     currency = amount["currency"][0:3]
     issuer = helpers.decode_address(amount["issuer"])
@@ -192,8 +178,9 @@ def serialize_issued_amount(amount: dict) -> bytearray:
     digit = value.digit
     exponent = value.exponent
     mantissa = 0
-    for i in reversed(range(len(digit))):
-        mantissa += digit[i] * (10**i)
+    dLen = len(digit)
+    for i in range(dLen):
+        mantissa += digit[dLen - i - 1] * (10**i)
 
     while mantissa < 10**15:
         mantissa *= 10
@@ -204,7 +191,18 @@ def serialize_issued_amount(amount: dict) -> bytearray:
 
     if exponent < -96 or 80 < exponent:
         raise ValueError("Issued value is too big or small")
-    # wip
+
+    # binary string to bytearray from
+    # https://stackoverflow.com/questions/32675679/convert-binary-string-to-bytearray-in-python-3
+    bitstr = "1" + ("0" if value.sign else "1") + (
+        ("0" * 8) + format(exponent + 97, "b"))[-8:] + (
+            ("0" * 54) + format(mantissa, "b"))[-54:]
+    value_bytes = int(bitstr, 2).to_bytes((len(bitstr) + 7) // 8,
+                                          byteorder='big')
+    currency_bytes = b'\x00' + (b'\x00' * 11) + currency.encode('utf-8') + (
+        b'\x00' * 5)
+    issuer_bytes = helpers.decode_address(issuer)
+    return bytearray(value_bytes + currency_bytes + issuer_bytes)
 
 
 def write_bytes(w: bytearray, value: bytes):
