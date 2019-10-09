@@ -34,6 +34,7 @@ OBJS += lisk.o
 OBJS += nem2.o
 OBJS += nem_mosaics.o
 OBJS += stellar.o
+OBJS += ripple.o
 endif
 
 OBJS += debug.o
@@ -88,6 +89,8 @@ OBJS += ../vendor/trezor-crypto/chacha20poly1305/poly1305-donna.o
 OBJS += ../vendor/trezor-crypto/chacha20poly1305/rfc7539.o
 
 OBJS += ../vendor/trezor-crypto/nem.o
+OBJS += ../vendor/trezor-crypto/ripple.o
+OBJS += ../vendor/trezor-crypto/base58_ripple.o
 
 OBJS += ../vendor/QR-Code-generator/c/qrcodegen.o
 
@@ -109,6 +112,7 @@ ifneq ($(BITCOIN_ONLY),1)
 OBJS += protob/messages-ethereum.pb.o
 OBJS += protob/messages-lisk.pb.o
 OBJS += protob/messages-nem.pb.o
+OBJS += protob/messages-ripple.pb.o
 OBJS += protob/messages-stellar.pb.o
 endif
 
@@ -134,10 +138,12 @@ CFLAGS += -DUSE_MONERO=0
 ifneq ($(BITCOIN_ONLY),1)
 CFLAGS += -DUSE_ETHEREUM=1
 CFLAGS += -DUSE_NEM=1
+CFLAGS += -DUSE_RIPPLE=1
 MAKO_RENDER_FLAG =
 else
 CFLAGS += -DUSE_ETHEREUM=0
 CFLAGS += -DUSE_NEM=0
+CFLAGS += -DUSE_RIPPLE=0
 MAKO_RENDER_FLAG = --bitcoin-only
 endif
 

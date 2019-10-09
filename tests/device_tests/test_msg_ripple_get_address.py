@@ -28,7 +28,6 @@ CUSTOM_MNEMONIC = (
 
 @pytest.mark.altcoin
 @pytest.mark.ripple
-@pytest.mark.skip_t1  # T1 support is not planned
 class TestMsgRippleGetAddress:
     def test_ripple_get_address(self, client):
         # data from https://iancoleman.io/bip39/#english
