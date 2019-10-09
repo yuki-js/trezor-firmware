@@ -39,7 +39,6 @@ const int8_t b58rdigits_map[] = {
     -1, -1, 5,  34, 35, 36, 37, 6,  39, 3,  49, 42, 43, -1, 44, 4,  46, 1,  48,
     0,  2,  51, 52, 53, 9,  55, 56, 57, -1, -1, -1, -1, -1};
 
-
 typedef uint64_t b58_maxint_t;
 typedef uint32_t b58_almostmaxint_t;
 #define b58_almostmaxint_bits (sizeof(b58_almostmaxint_t) * 8)
@@ -125,7 +124,6 @@ bool b58rtobin(void *bin, size_t *binszp, const char *b58) {
 
   return true;
 }
-
 
 int b58rcheck(const void *bin, size_t binsz, HasherType hasher_type,
               const char *base58str) {
