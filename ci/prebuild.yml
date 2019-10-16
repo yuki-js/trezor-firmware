@@ -2,6 +2,7 @@ image: registry.gitlab.com/satoshilabs/trezor/trezor-firmware/environment
 
 style prebuild:
   stage: prebuild
+  when: manual
   only:
     changes:
       - ci/**/*
@@ -13,6 +14,7 @@ style prebuild:
 
 common prebuild:
   stage: prebuild
+  when: manual
   only:
     changes:
       - ci/**/*
@@ -23,6 +25,7 @@ common prebuild:
 
 gen prebuild:
   stage: prebuild
+  when: manual
   only:
     changes:
       - ci/**/*
