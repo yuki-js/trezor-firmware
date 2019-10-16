@@ -3,21 +3,26 @@
         "Actilectrum": "https://actilectrum.org"
     },
     "bitcoin:BCH": {
-        "Electron Cash": "https://electroncash.org"
+        "Electron Cash": "https://electroncash.org",
+        "Exodus": "https://www.exodus.io"
     },
     "bitcoin:BELL": {
         "Electrum-BELL": "https://bell.electrum-jp.net"
     },
     "bitcoin:BTC": {
-        "Electrum": "https://electrum.org"
+        "Electrum": "https://electrum.org",
+        "Magnum": "https://magnumwallet.co",
+        "Exodus": "https://www.exodus.io"
     },
     "bitcoin:BTCP": {
         "BTCP Electrum": "https://github.com/BTCPrivate/electrum-btcp"
     },
     "bitcoin:BTG": {
-        "ElectrumG": "https://github.com/BTCGPU/electrum"
+        "ElectrumG": "https://github.com/BTCGPU/electrum",
+        "Exodus": "https://www.exodus.io"
     },
     "bitcoin:BTX": {
+        "Magnum": "https://magnumwallet.co",
         "Electrum-BTX": "https://github.com/LIMXTEC/electrum-btx"
     },
     "bitcoin:CPC": {
@@ -27,7 +32,19 @@
         "Electrum-CPU": "https://cpuchain.org/download-page.html"
     },
     "bitcoin:DASH": {
-        "Dash Electrum": "https://electrum.dash.org"
+        "Dash Electrum": "https://electrum.dash.org",
+        "Magnum": "https://magnumwallet.co",
+        "Exodus": "https://www.exodus.io"
+    },
+    "bitcoin:DCR": {
+        "Exodus": "https://www.exodus.io"
+    },
+    "bitcoin:DGB": {
+        "Exodus": "https://www.exodus.io"
+    },
+    "bitcoin:DOGE": {
+        "Exodus": "https://www.exodus.io",
+        "Magnum": "https://magnumwallet.co"
     },
     "bitcoin:FJC": {
         "Electrum-FJC": "http://www.fujicoin.org/downloads.php"
@@ -41,11 +58,15 @@
     "bitcoin:GRS": {
         "Electrum-GRS": "https://www.groestlcoin.org/groestlcoin-electrum-wallet"
     },
+    "bitcoin:KMD": {
+        "Magnum": "https://magnumwallet.co"
+    },
     "bitcoin:KOTO": {
         "Electrum-KOTO": "https://electrum.kotocoin.info"
     },
     "bitcoin:LTC": {
-        "Electrum-LTC": "https://electrum-ltc.org"
+        "Electrum-LTC": "https://electrum-ltc.org",
+        "Exodus": "https://www.exodus.io"
     },
     "bitcoin:MONA": {
         "Electrum-MONA": "https://electrum-mona.org"
@@ -88,6 +109,10 @@
     },
     "bitcoin:ZNY": {
         "Electrum-ZNY": "https://zny.electrum-jp.net"
+    },
+    "bitcoin:ZEC": {
+        "Magnum": "https://magnumwallet.co",
+        "Exodus": "https://www.exodus.io"
     },
     "bitcoin:XRC": {
         "Electrum-XRC": "https://electrum.bitcoinrh.org"
