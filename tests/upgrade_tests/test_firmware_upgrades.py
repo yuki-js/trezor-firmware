@@ -14,14 +14,17 @@
 # You should have received a copy of the License along with this library.
 # If not, see <https://www.gnu.org/licenses/lgpl-3.0.html>.
 
-import os
-
 import pytest
 
-from trezorlib import MINIMUM_FIRMWARE_VERSION, btc, debuglink, device
+from trezorlib import MINIMUM_FIRMWARE_VERSION, btc, debuglink, device, fido
+from trezorlib.messages import BackupType
 from trezorlib.tools import H_
 
+from ..click_tests import recovery
+from ..common import MNEMONIC_SLIP39_BASIC_20_3of6, MNEMONIC_SLIP39_BASIC_20_3of6_SECRET
+from ..device_handler import BackgroundDeviceHandler
 from ..emulators import ALL_TAGS, EmulatorWrapper
+from . import SELECTED_GENS
 
 MINIMUM_FIRMWARE_VERSION["1"] = (1, 0, 0)
 MINIMUM_FIRMWARE_VERSION["T"] = (2, 0, 0)
@@ -37,18 +40,22 @@ LANGUAGE = "english"
 STRENGTH = 128
 
 
-def for_all(*args, minimum_version=(1, 0, 0)):
+def for_all(*args, legacy_minimum_version=(1, 0, 0), core_minimum_version=(2, 0, 0)):
     if not args:
         args = ("core", "legacy")
 
-    specified_gens = os.environ.get("TREZOR_UPGRADE_TEST")
-    if specified_gens is not None:
-        enabled_gens = specified_gens.split(",")
-    else:
-        enabled_gens = args
+    # If any gens were selected, use them. If none, select all.
+    enabled_gens = SELECTED_GENS or args
 
     all_params = []
     for gen in args:
+        if gen == "legacy":
+            minimum_version = legacy_minimum_version
+        elif gen == "core":
+            minimum_version = core_minimum_version
+        else:
+            raise ValueError
+
         if gen not in enabled_gens:
             continue
         try:
@@ -164,7 +171,7 @@ def test_upgrade_reset_skip_backup(gen, from_tag, to_tag):
         assert btc.get_address(emu.client, "Bitcoin", PATH) == address
 
 
-@for_all(minimum_version=(1, 7, 2))
+@for_all(legacy_minimum_version=(1, 7, 2))
 def test_upgrade_reset_no_backup(gen, from_tag, to_tag):
     def asserts(tag, client):
         assert not client.features.pin_protection
@@ -196,6 +203,66 @@ def test_upgrade_reset_no_backup(gen, from_tag, to_tag):
         assert device_id == emu.client.features.device_id
         asserts(to_tag, emu.client)
         assert btc.get_address(emu.client, "Bitcoin", PATH) == address
+
+
+# Although Shamir was introduced in 2.1.2 already, the debug instrumentation was not present until 2.1.9.
+@for_all("core", core_minimum_version=(2, 1, 9))
+def test_upgrade_shamir_recovery(gen, from_tag, to_tag):
+    with EmulatorWrapper(gen, from_tag) as emu, BackgroundDeviceHandler(
+        emu.client
+    ) as device_handler:
+        assert emu.client.features.recovery_mode is False
+        debug = device_handler.debuglink()
+
+        device_handler.run(device.recover, pin_protection=False)
+
+        recovery.confirm_recovery(debug)
+        recovery.select_number_of_words(debug)
+        layout = recovery.enter_share(debug, MNEMONIC_SLIP39_BASIC_20_3of6[0])
+        assert "2 more shares" in layout.text
+
+        device_id = emu.client.features.device_id
+        storage = emu.storage()
+        device_handler.check_finalize()
+
+    with EmulatorWrapper(gen, to_tag, storage=storage) as emu, BackgroundDeviceHandler(
+        emu.client
+    ) as device_handler:
+        assert device_id == emu.client.features.device_id
+        assert emu.client.features.recovery_mode
+        debug = device_handler.debuglink()
+
+        # second share
+        layout = recovery.enter_share(debug, MNEMONIC_SLIP39_BASIC_20_3of6[2])
+        assert "1 more share" in layout.text
+
+        # last one
+        layout = recovery.enter_share(debug, MNEMONIC_SLIP39_BASIC_20_3of6[1])
+        assert "You have successfully" in layout.text
+
+        # Check the result
+        state = debug.state()
+        assert state.mnemonic_secret.hex() == MNEMONIC_SLIP39_BASIC_20_3of6_SECRET
+        assert state.mnemonic_type == BackupType.Slip39_Basic
+        device_handler.check_finalize()
+
+
+@for_all(legacy_minimum_version=(1, 8, 4), core_minimum_version=(2, 1, 9))
+def test_upgrade_u2f(gen, from_tag, to_tag):
+    """
+    Check U2F counter stayed the same after an upgrade.
+    """
+    with EmulatorWrapper(gen, from_tag) as emu:
+        success = fido.set_counter(emu.client, 10)
+        assert "U2F counter set" in success
+
+        counter = fido.get_next_counter(emu.client)
+        assert counter == 11
+        storage = emu.storage()
+
+    with EmulatorWrapper(gen, to_tag, storage=storage) as emu:
+        counter = fido.get_next_counter(emu.client)
+        assert counter == 12
 
 
 if __name__ == "__main__":

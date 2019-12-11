@@ -31,6 +31,7 @@ from .CardanoTxInputType import CardanoTxInputType
 from .CardanoTxOutputType import CardanoTxOutputType
 from .CardanoTxRequest import CardanoTxRequest
 from .ChangePin import ChangePin
+from .ChangeWipeCode import ChangeWipeCode
 from .CipherKeyValue import CipherKeyValue
 from .CipheredKeyValue import CipheredKeyValue
 from .ClearSession import ClearSession
@@ -41,6 +42,7 @@ from .CosiSignature import CosiSignature
 from .DebugLinkDecision import DebugLinkDecision
 from .DebugLinkFlashErase import DebugLinkFlashErase
 from .DebugLinkGetState import DebugLinkGetState
+from .DebugLinkLayout import DebugLinkLayout
 from .DebugLinkLog import DebugLinkLog
 from .DebugLinkMemory import DebugLinkMemory
 from .DebugLinkMemoryRead import DebugLinkMemoryRead
@@ -100,6 +102,7 @@ from .GetAddress import GetAddress
 from .GetECDHSessionKey import GetECDHSessionKey
 from .GetEntropy import GetEntropy
 from .GetFeatures import GetFeatures
+from .GetNextU2FCounter import GetNextU2FCounter
 from .GetPublicKey import GetPublicKey
 from .HDNodePathType import HDNodePathType
 from .HDNodeType import HDNodeType
@@ -186,6 +189,7 @@ from .NEMSignTx import NEMSignTx
 from .NEMSignedTx import NEMSignedTx
 from .NEMTransactionCommon import NEMTransactionCommon
 from .NEMTransfer import NEMTransfer
+from .NextU2FCounter import NextU2FCounter
 from .PassphraseAck import PassphraseAck
 from .PassphraseRequest import PassphraseRequest
 from .PassphraseStateAck import PassphraseStateAck
@@ -252,7 +256,9 @@ from .TezosContractID import TezosContractID
 from .TezosDelegationOp import TezosDelegationOp
 from .TezosGetAddress import TezosGetAddress
 from .TezosGetPublicKey import TezosGetPublicKey
+from .TezosManagerTransfer import TezosManagerTransfer
 from .TezosOriginationOp import TezosOriginationOp
+from .TezosParametersManager import TezosParametersManager
 from .TezosProposalOp import TezosProposalOp
 from .TezosPublicKey import TezosPublicKey
 from .TezosRevealOp import TezosRevealOp
@@ -282,6 +288,7 @@ from . import BinanceOrderType
 from . import BinanceTimeInForce
 from . import ButtonRequestType
 from . import Capability
+from . import DebugSwipeDirection
 from . import FailureType
 from . import InputScriptType
 from . import LiskTransactionType
